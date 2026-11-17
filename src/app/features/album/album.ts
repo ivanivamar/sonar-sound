@@ -1,4 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { Location } from '@angular/common';
 import { LibraryService } from '../../core/library/library.service';
 import { Router } from '@angular/router';
 import { AlbumFile, TrackFile } from '../../core/library/library-file.model';
@@ -19,6 +20,7 @@ export interface DiscGroup {
 export class Album {
     private readonly libraryService = inject(LibraryService);
     private readonly router = inject(Router);
+    private readonly location = inject(Location);
 
     readonly id = input.required<string>();
 
@@ -36,6 +38,11 @@ export class Album {
     });
 
     goBack() {
-        this.router.navigate(['/library']);
+        const state = this.location.getState() as { navigationId?: number } | null;
+        if ((state?.navigationId ?? 1) > 1) {
+            this.location.back();                       // we came from somewhere in the app
+        } else {
+            this.router.navigate(['/library']);         // opened directly: go to the library
+        }
     }
 }

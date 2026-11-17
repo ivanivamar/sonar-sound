@@ -1,4 +1,4 @@
-import { Component, OnDestroy, output } from '@angular/core';
+import { Component, OnDestroy, output, input } from '@angular/core';
 
 @Component({
     imports: [],
@@ -7,13 +7,13 @@ import { Component, OnDestroy, output } from '@angular/core';
     templateUrl: './search.html',
 })
 export class Search implements OnDestroy {
+    value = input('');
     returnSearch = output<string>();
 
-    private readonly debounceMs = 300;
+    private readonly debounceMs = 150;
     private timeoutId?: ReturnType<typeof setTimeout>;
 
-    onInput(event: Event): void {
-        const value = (event.target as HTMLInputElement).value;
+    onInput(value: string): void {
         clearTimeout(this.timeoutId);
         this.timeoutId = setTimeout(() => this.returnSearch.emit(value), this.debounceMs);
     }

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { normalizeForSearch } from '../../shared/functions/texts';
 import { LibraryService } from '../../core/library/library.service';
 import { AlbumCard } from '../../shared/components/album-card/album-card';
@@ -15,9 +15,12 @@ export class Library {
     libraryService = inject(LibraryService);
     router = inject(Router);
 
-    searchFilter = signal('');
+    readonly q = input('', { transform: (v: string | undefined) => v ?? '' });
     filteredAlbums = computed(() => {
-        const filter = this.searchFilter();
+        const filter = this.q();
+        if (!filter) {
+            return this.libraryService.albums();
+        }
 
         // normalize the filter string for case-insensitive comparison and accent-insensitive comparison if needed
         const normalizedFilter = normalizeForSearch(filter);
@@ -28,6 +31,14 @@ export class Library {
             normalizeForSearch(album.artist).includes(normalizedFilter)
         );
     });
+
+    onSearch(value: string) {
+        this.router.navigate([], {
+            queryParams: { q: value || null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true,
+        });
+    }
 
     goToAlbum(albumId: string) {
         this.router.navigate(['/library/album', albumId]);

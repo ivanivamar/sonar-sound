@@ -1,0 +1,14 @@
+@if (libraryService.isLoading()) {
+    <span>Loading...</span>
+} @else {
+    <app-search (returnSearch)="searchFilter.set($event)"></app-search>
+
+    <div class="albums-grid">
+        @if (filteredAlbums().length === 0) {
+            <span>No albums found.</span>
+        }
+        @for (album of filteredAlbums(); track $index) {
+            <app-album-card [album]="album" (albumClick)="goToAlbum($event)"></app-album-card>
+        }
+    </div>
+}

@@ -1,0 +1,247 @@
+{
+    "version": 1,
+    "updatedAt": "2026-11-17T20:00:00.000Z",
+    "artists": {
+        "the-low-tides": {
+            "id": "the-low-tides",
+            "name": "The Low Tides",
+            "addedAt": "2026-10-02T18:12:00.000Z"
+        },
+        "mira-solen": {
+            "id": "mira-solen",
+            "name": "Mira Solen",
+            "addedAt": "2026-10-05T09:40:00.000Z"
+        }
+    },
+    "albums": {
+        "the-low-tides--harbour-lights": {
+            "id": "the-low-tides--harbour-lights",
+            "title": "Harbour Lights",
+            "artistId": "the-low-tides",
+            "artist": "The Low Tides",
+            "year": 2019,
+            "date": "2019-04-12",
+            "genre": "Indie Rock",
+            "cover": "FAKE_DRIVE_COVER_001",
+            "trackCount": 3,
+            "addedAt": "2026-10-02T18:12:00.000Z"
+        },
+        "the-low-tides--undertow": {
+            "id": "the-low-tides--undertow",
+            "title": "Undertow",
+            "artistId": "the-low-tides",
+            "artist": "The Low Tides",
+            "year": 2023,
+            "genre": "Indie Rock",
+            "cover": "FAKE_DRIVE_COVER_002",
+            "trackCount": 2,
+            "addedAt": "2026-10-02T18:20:00.000Z"
+        },
+        "mira-solen--night-garden": {
+            "id": "mira-solen--night-garden",
+            "title": "Night Garden",
+            "artistId": "mira-solen",
+            "artist": "Mira Solen",
+            "year": 2021,
+            "genre": "Electronic",
+            "cover": null,
+            "trackCount": 3,
+            "addedAt": "2026-10-05T09:40:00.000Z"
+        }
+    },
+    "tracks": {
+        "a1f3c9e20b11": {
+            "id": "a1f3c9e20b11",
+            "title": "Lighthouse",
+            "artist": "The Low Tides",
+            "albumId": "the-low-tides--harbour-lights",
+            "artistId": "the-low-tides",
+            "disc": 1,
+            "track": 1,
+            "duration": 214.36,
+            "syncedLyrics": true,
+            "lyrics": "[00:12.40]Every light along the harbour\n[00:17.85]Is a promise someone made",
+            "flac": {
+                "id": "FAKE_DRIVE_FLAC_001",
+                "size": 31457280,
+                "sampleRate": 44100,
+                "bitDepth": 16
+            },
+            "mobile": {
+                "id": "FAKE_DRIVE_OPUS_001",
+                "size": 4194304,
+                "codec": "opus",
+                "bitrate": "160k"
+            },
+            "addedAt": "2026-10-02T18:12:00.000Z"
+        },
+        "b7d20e4a9c02": {
+            "id": "b7d20e4a9c02",
+            "title": "Salt in the Wires",
+            "artist": "The Low Tides",
+            "albumId": "the-low-tides--harbour-lights",
+            "artistId": "the-low-tides",
+            "disc": 1,
+            "track": 2,
+            "duration": 187.9,
+            "syncedLyrics": false,
+            "flac": {
+                "id": "FAKE_DRIVE_FLAC_002",
+                "size": 27262976,
+                "sampleRate": 44100,
+                "bitDepth": 16
+            },
+            "mobile": {
+                "id": "FAKE_DRIVE_OPUS_002",
+                "size": 3670016,
+                "codec": "opus",
+                "bitrate": "160k"
+            },
+            "addedAt": "2026-10-02T18:12:00.000Z"
+        },
+        "c9e41b7f3d03": {
+            "id": "c9e41b7f3d03",
+            "title": "Low Water",
+            "artist": "The Low Tides, Mira Solen",
+            "albumId": "the-low-tides--harbour-lights",
+            "artistId": "the-low-tides",
+            "disc": 1,
+            "track": 3,
+            "duration": 251.04,
+            "syncedLyrics": false,
+            "flac": {
+                "id": "FAKE_DRIVE_FLAC_003",
+                "size": 36700160,
+                "sampleRate": 44100,
+                "bitDepth": 16
+            },
+            "mobile": {
+                "id": "FAKE_DRIVE_OPUS_003",
+                "size": 4980736,
+                "codec": "opus",
+                "bitrate": "160k"
+            },
+            "addedAt": "2026-10-02T18:12:00.000Z"
+        },
+        "d2a83f6c1e04": {
+            "id": "d2a83f6c1e04",
+            "title": "Undertow",
+            "artist": "The Low Tides",
+            "albumId": "the-low-tides--undertow",
+            "artistId": "the-low-tides",
+            "disc": 1,
+            "track": 1,
+            "duration": 302.5,
+            "syncedLyrics": false,
+            "flac": {
+                "id": "FAKE_DRIVE_FLAC_004",
+                "size": 62914560,
+                "sampleRate": 96000,
+                "bitDepth": 24
+            },
+            "mobile": {
+                "id": "FAKE_DRIVE_OPUS_004",
+                "size": 6029312,
+                "codec": "opus",
+                "bitrate": "160k"
+            },
+            "addedAt": "2026-10-02T18:20:00.000Z"
+        },
+        "e5b19c0d7a05": {
+            "id": "e5b19c0d7a05",
+            "title": "Breakwater",
+            "artist": "The Low Tides",
+            "albumId": "the-low-tides--undertow",
+            "artistId": "the-low-tides",
+            "disc": 1,
+            "track": 2,
+            "duration": 228.12,
+            "syncedLyrics": false,
+            "flac": {
+                "id": "FAKE_DRIVE_FLAC_005",
+                "size": 48234496,
+                "sampleRate": 96000,
+                "bitDepth": 24
+            },
+            "mobile": {
+                "id": "FAKE_DRIVE_OPUS_005",
+                "size": 4587520,
+                "codec": "opus",
+                "bitrate": "160k"
+            },
+            "addedAt": "2026-10-02T18:20:00.000Z"
+        },
+        "f0c7a2e9b406": {
+            "id": "f0c7a2e9b406",
+            "title": "Moonflower",
+            "artist": "Mira Solen",
+            "albumId": "mira-solen--night-garden",
+            "artistId": "mira-solen",
+            "disc": 1,
+            "track": 1,
+            "duration": 276.8,
+            "syncedLyrics": false,
+            "flac": {
+                "id": "FAKE_DRIVE_FLAC_006",
+                "size": 40894464,
+                "sampleRate": 48000,
+                "bitDepth": 24
+            },
+            "mobile": {
+                "id": "FAKE_DRIVE_OPUS_006",
+                "size": 5505024,
+                "codec": "opus",
+                "bitrate": "160k"
+            },
+            "addedAt": "2026-10-05T09:40:00.000Z"
+        },
+        "a8e6d1f2c507": {
+            "id": "a8e6d1f2c507",
+            "title": "Glasshouse",
+            "artist": "Mira Solen",
+            "albumId": "mira-solen--night-garden",
+            "artistId": "mira-solen",
+            "disc": 1,
+            "track": 2,
+            "duration": 199.45,
+            "syncedLyrics": false,
+            "flac": {
+                "id": "FAKE_DRIVE_FLAC_007",
+                "size": 29360128,
+                "sampleRate": 48000,
+                "bitDepth": 24
+            },
+            "mobile": {
+                "id": "FAKE_DRIVE_OPUS_007",
+                "size": 3932160,
+                "codec": "opus",
+                "bitrate": "160k"
+            },
+            "addedAt": "2026-10-05T09:40:00.000Z"
+        },
+        "b3f5e8a0d608": {
+            "id": "b3f5e8a0d608",
+            "title": "Nocturne for Ferns",
+            "artist": "Mira Solen",
+            "albumId": "mira-solen--night-garden",
+            "artistId": "mira-solen",
+            "disc": 2,
+            "track": 1,
+            "duration": 341.22,
+            "syncedLyrics": false,
+            "flac": {
+                "id": "FAKE_DRIVE_FLAC_008",
+                "size": 50331648,
+                "sampleRate": 48000,
+                "bitDepth": 24
+            },
+            "mobile": {
+                "id": "FAKE_DRIVE_OPUS_008",
+                "size": 6815744,
+                "codec": "opus",
+                "bitrate": "160k"
+            },
+            "addedAt": "2026-10-05T09:40:00.000Z"
+        }
+    }
+}

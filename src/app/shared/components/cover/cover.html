@@ -1,0 +1,9 @@
+@if (cover() && !failed()) {
+    <div class="album-cover">
+        <img [src]="cover()" (error)="failed.set(true)" alt />
+    </div>
+} @else {
+    <div class="album-cover placeholder">
+        <span class="material-symbols-outlined"> album </span>
+    </div>
+}

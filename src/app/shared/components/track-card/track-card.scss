@@ -1,0 +1,47 @@
+.track-card {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr auto; // number | title + artist | duration
+    align-items: center;
+    column-gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    min-height: 56px; // comfortable tap target, even with no artist line
+    border-radius: var(--space-2);
+    min-height: 56px;
+    transition: background-color ease-in-out 0.3s;
+    cursor: pointer;
+
+    &:hover {
+        background-color: #eee;
+    }
+
+    .track-number {
+        font-size: 16px;
+        font-weight: bold;
+        color: #666;
+    }
+
+    .track-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0; // allow text to truncate
+
+        .track-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .track-artist {
+            font-size: 14px;
+            color: #666;
+        }
+    }
+
+    // goes to the right side of the card
+    .track-duration {
+        margin-left: auto;
+        font-size: 14px;
+        color: #666;
+    }
+}

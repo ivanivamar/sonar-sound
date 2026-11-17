@@ -1,0 +1,42 @@
+.album-card {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+    width: 100%;
+
+    &:hover {
+        transform: translateY(-4px);
+    }
+
+    app-cover {
+        width: 168px;
+    }
+
+    .album-info {
+        margin-top: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        .album-title {
+            font-size: 16px;
+            font-weight: bold;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .album-meta {
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+
+            .album-artist,
+            .album-year {
+                font-size: 14px;
+                color: #666;
+            }
+        }
+    }
+}

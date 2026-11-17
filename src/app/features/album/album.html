@@ -1,0 +1,45 @@
+@if (libraryService.isLoading()) {
+    <span>Loading...</span>
+} @else {
+    <div class="album">
+        <button class="go-back-button" (click)="goBack()">
+            <span class="material-symbols-outlined"> arrow_back </span>
+        </button>
+
+        @if (!album()) {
+            <span>Album not found</span>
+        } @else {
+            <header>
+                <app-cover [cover]="album()?.cover"></app-cover>
+
+                <div class="album-info">
+                    <span class="album-meta">
+                        ALBUM · {{ album()?.year }} · {{ album()?.genre }}
+                    </span>
+
+                    <h1 class="album-title">
+                        {{ album()?.title }}
+                    </h1>
+
+                    <span class="album-artist">
+                        {{ album()?.artist }}
+                    </span>
+                </div>
+            </header>
+
+            <div class="album-tracks">
+                @for (disc of discGroups(); track disc.disc) {
+                    <div class="album-disk">
+                        <span class="material-symbols-outlined"> album </span>
+                        <span class="album-disk-number">Disc {{ disc.disc }}</span>
+                    </div>
+                    <div class="track-list">
+                        @for (track of disc.tracks; track track.id) {
+                            <app-track-card [track]="track"></app-track-card>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}

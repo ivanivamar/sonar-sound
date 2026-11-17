@@ -1,0 +1,12 @@
+<div class="album-card" (click)="goToAlbum()" (keypress)="goToAlbum()" tabindex="0">
+    <app-cover [cover]="album().cover"></app-cover>
+
+    <div class="album-info">
+        <span class="album-title">{{ album().title }}</span>
+        <div class="album-meta">
+            <span class="album-artist">{{ album().artist }}</span>
+            ·
+            <span class="album-year">{{ album().year }}</span>
+        </div>
+    </div>
+</div>

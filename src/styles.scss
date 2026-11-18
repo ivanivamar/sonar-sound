@@ -1,18 +1,4 @@
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
-
-:root {
-    --space-1: 4px;
-    --space-2: 8px;
-    --space-3: 12px;
-    --space-4: 16px;
-    --space-6: 24px;
-    --space-8: 32px;
-}
-
-body {
-    font-family: 'Google Sans Flex', sans-serif;
-}
+@use 'styles/base.scss';
+@use 'styles/variables.scss';
+@use 'styles/buttons.scss';
+@use 'styles/ripple.scss';

@@ -1,1 +1,12 @@
-<router-outlet />
+<main class="app-shell">
+    @if (authService.isSignedIn()) {
+        <app-sidebar></app-sidebar>
+        <section class="app-content">
+            <app-atmosphere></app-atmosphere>
+            <router-outlet />
+        </section>
+    } @else {
+        <app-atmosphere></app-atmosphere>
+        <router-outlet />
+    }
+</main>

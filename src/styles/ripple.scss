@@ -1,0 +1,26 @@
+.app-ripple-layer {
+    position: fixed;
+    z-index: 2147483647;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.app-ripple-wave {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--app-ripple-color);
+    opacity: 0;
+    transform: scale(0);
+    animation: app-ripple 350ms ease-out;
+}
+
+@keyframes app-ripple {
+    0% {
+        opacity: 0.24;
+        transform: scale(0);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1);
+    }
+}

@@ -1,10 +1,12 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth/auth.service';
+import { Sidebar } from './shared/components/sidebar/sidebar';
+import { Atmosphere } from './shared/components/atmosphere/atmosphere';
 
 @Component({
     selector: 'app-root',
-    imports: [RouterOutlet],
+    imports: [RouterOutlet, Sidebar, Atmosphere],
     templateUrl: './app.html',
     styleUrl: './app.scss',
 })

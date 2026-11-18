@@ -2,6 +2,16 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.7.
 
+## Ripple effect
+
+Import `Ripple` from `src/app/shared/directives/ripple` in a component's `imports`, then add `appRipple` to an element:
+
+```html
+<button appRipple>Press me</button>
+```
+
+The ripple starts at the pointer position, uses the element's text color by default, and respects reduced-motion preferences. Set `--ripple-color` on the element to override the color. Disabled elements do not ripple.
+
 ## Development server
 
 To start a local development server, run:

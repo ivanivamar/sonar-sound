@@ -1,9 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { Router, ActivatedRoute } from '@angular/router';
+import { Ripple } from '../../shared/directives/ripple';
 
 @Component({
-    imports: [],
+    imports: [Ripple],
     selector: 'app-auth',
     styleUrl: './auth.scss',
     templateUrl: './auth.html',

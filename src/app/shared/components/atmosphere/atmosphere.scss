@@ -1,0 +1,36 @@
+.atm {
+    pointer-events: none;
+    z-index: 0;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+
+    --hc: 1;
+    --h: 215;
+
+    &.atm-fixed {
+        position: fixed;
+    }
+
+    .atm-wash {
+        background: radial-gradient(
+            ellipse 55% 55% at 62% 50%,
+            oklch(0.4 calc(0.12 * var(--hc, 1) + 0.01) var(--h) / 0.34),
+            oklch(0.24 calc(0.07 * var(--hc, 1) + 0.005) var(--h) / 0.14) 45%,
+            transparent 72%
+        );
+        height: 95%;
+        position: absolute;
+        top: -35%;
+        left: -10%;
+        right: -10%;
+    }
+
+    .atm-rings {
+        width: 100%;
+        height: 100%;
+        color: oklch(0.86 calc(0.04 * var(--hc, 1)) var(--h));
+        position: absolute;
+        inset: 0;
+    }
+}

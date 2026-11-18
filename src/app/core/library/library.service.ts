@@ -1,10 +1,17 @@
-import { httpResource } from '@angular/common/http';
-import { computed, Service } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { computed, Service, inject } from '@angular/core';
 import { LibraryFile } from './library-file.model';
+import { AuthService } from '../auth/auth.service';
+import { DriveService } from '../drive/drive.service';
 
 @Service()
 export class LibraryService {
-    private readonly libraryFile = httpResource<LibraryFile>(() => `/library.json`);
+    private readonly authService = inject(AuthService);
+    private readonly driveService = inject(DriveService);
+    private readonly libraryFile = rxResource({
+        params: () => this.authService.isSignedIn() ? true : undefined,
+        stream: () => this.driveService.readJsonByName<LibraryFile>('library.json'),
+    });
 
     readonly isLoading = this.libraryFile.isLoading;
     readonly error = this.libraryFile.error;

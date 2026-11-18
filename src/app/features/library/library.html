@@ -3,6 +3,8 @@
 } @else {
     <app-search [value]="q()" (returnSearch)="onSearch($event)"></app-search>
 
+    <button (click)="onLogout()">Logout</button>
+
     <div class="albums-grid">
         @if (filteredAlbums().length === 0) {
             <span>No albums found.</span>
@@ -11,4 +13,7 @@
             <app-album-card [album]="album" (albumClick)="goToAlbum($event)"></app-album-card>
         }
     </div>
+
+    <button (click)="getDriveFiles()">Get Drive Files</button>
+    <button (click)="getDriveFile()">Get Drive File</button>
 }

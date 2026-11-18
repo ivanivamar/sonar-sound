@@ -3,6 +3,12 @@ import { inject } from '@angular/core';
 import { AuthService } from './auth.service';
 import { catchError, throwError } from 'rxjs';
 
+/**
+ * Adds the current bearer token to Google API requests.
+ *
+ * Requests to other hosts pass through unchanged. A 401 response from Google
+ * clears the local auth session, and the original error is rethrown.
+ */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
     const authService = inject(AuthService);
 

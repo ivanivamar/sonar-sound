@@ -67,7 +67,7 @@ export class Library {
     }
 
     onLogout() {
+        // App's effect redirects to /auth once the session is cleared
         this.authService.signOut();
-        this.router.navigate(['/auth']);
     }
 }

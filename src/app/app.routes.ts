@@ -14,6 +14,12 @@ export const routes: Routes = [
         canActivate: [guestGuard],
     },
     {
+        path: 'home',
+        loadComponent: () => import('./features/home/home').then((m) => m.Home),
+        pathMatch: 'full',
+        canActivate: [authGuard],
+    },
+    {
         path: 'library',
         loadComponent: () => import('./features/library/library').then((m) => m.Library),
         pathMatch: 'full',

@@ -6,7 +6,6 @@ import { LibraryService } from '../../core/library/library.service';
 import { AlbumCard } from '../../shared/components/album-card/album-card';
 import { Router } from '@angular/router';
 import { Search } from '../../shared/components/search/search';
-import { LibraryFile } from '../../core/library/library-file.model';
 
 @Component({
     imports: [AlbumCard, Search],
@@ -45,29 +44,7 @@ export class Library {
         });
     }
 
-    getDriveFiles() {
-        this.driveService.getFiles().subscribe(files => {
-            console.log(files);
-        });
-    }
-
-    getDriveFile(name = 'library.json') {
-        this.driveService.findFile(name).subscribe(file => {
-            if (file) {
-                this.driveService.downloadJson<LibraryFile>(file.id).subscribe(libraryJson => {
-                    // album count
-                    console.log(Object.keys(libraryJson.albums).length);
-                });
-            }
-        });
-    }
-
     goToAlbum(albumId: string) {
         this.router.navigate(['/library/album', albumId]);
-    }
-
-    onLogout() {
-        // App's effect redirects to /auth once the session is cleared
-        this.authService.signOut();
     }
 }

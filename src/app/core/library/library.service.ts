@@ -26,10 +26,14 @@ export class LibraryService {
     readonly error = this.libraryFile.error;
 
     private readonly albumsById = computed(() => this.libraryFile.value()?.albums ?? {});
+    private readonly artistsById = computed(() => this.libraryFile.value()?.artists ?? {});
     private readonly tracksById = computed(() => this.libraryFile.value()?.tracks ?? {});
 
     /** All loaded albums as an array; empty until album data is available. */
     readonly albums = computed(() => Object.values(this.albumsById()));
+
+    /** All loaded artists as an array; empty until artist data is available. */
+    readonly artists = computed(() => Object.values(this.artistsById()));
 
     /** All loaded tracks as an array; empty until track data is available. */
     readonly tracks = computed(() => Object.values(this.tracksById()));
@@ -56,5 +60,25 @@ export class LibraryService {
             return [];
         }
         return Object.values(this.tracksById()).filter((track) => track.albumId === albumId);
+    }
+
+    /**
+     * Finds an artist by its ID.
+     *
+     * @param artistId ID of the artist to find.
+     * @returns The matching artist, or `undefined` if it is not in the loaded library.
+     */
+    getArtistById(artistId: string) {
+        return this.artistsById()[artistId];
+    }
+
+    /**
+     * Returns the albums associated with an artist.
+     *
+     * @param artistId ID of the artist whose albums to retrieve.
+     * @returns The matching albums, or an empty array if the artist is not loaded.
+     */
+    getArtistAlbums(artistId: string) {
+        return Object.values(this.albumsById()).filter((album) => album.artistId === artistId);
     }
 }

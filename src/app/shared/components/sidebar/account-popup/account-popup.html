@@ -1,0 +1,23 @@
+<div
+    class="popup"
+    [class.show]="isVisible()"
+    [appPopupPosition]="anchor()"
+    [appPopupPositionOpen]="isVisible()"
+>
+    @if (userInfo(); as user) {
+        <header>
+            <span class="account-name">{{ user.given_name }}</span>
+        </header>
+    }
+
+    <div class="separator"></div>
+    <button class="menu-button">
+        <i class="material-symbols-rounded">settings</i>
+        Settings
+    </button>
+    <div class="separator"></div>
+    <button class="menu-button danger" (click)="onLogout()">
+        <i class="material-symbols-rounded">logout</i>
+        Logout
+    </button>
+</div>

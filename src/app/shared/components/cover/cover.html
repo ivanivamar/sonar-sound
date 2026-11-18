@@ -1,6 +1,6 @@
-@if (cover() && !failed()) {
+@if (coverResource.value() && !failed()) {
     <div class="album-cover">
-        <img [src]="cover()" (error)="failed.set(true)" alt />
+        <img [src]="coverResource.value()" (error)="failed.set(true)" alt />
     </div>
 } @else {
     <div class="album-cover placeholder">

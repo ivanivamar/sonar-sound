@@ -1,5 +1,9 @@
 <div class="album-card" (click)="goToAlbum()" (keypress)="goToAlbum()" tabindex="0">
-    <app-cover [cover]="album().cover"></app-cover>
+    @defer (on viewport) {
+        <app-cover [cover]="album().cover"></app-cover>
+    } @placeholder {
+        <div class="album-cover-placeholder"></div>
+    }
 
     <div class="album-info">
         <span class="album-title">{{ album().title }}</span>

@@ -68,4 +68,13 @@ export class DriveService {
             switchMap(fileId => fileId ? this.downloadJson<T>(fileId) : throwError(() => new Error(`File with name "${name}" not found`)))
         );
     }
+
+    downloadBlob(fileId: string): Observable<Blob> {
+        return this.http.get(`${this.baseUrl}/files/${fileId}`, {
+            params: {
+                alt: 'media'
+            },
+            responseType: 'blob'
+        });
+    }
 }

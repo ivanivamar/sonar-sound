@@ -20,4 +20,12 @@ body {
     text-rendering: optimizelegibility;
     margin: 0;
     line-height: 1.45;
+    overflow: hidden;
+}
+
+.separator {
+    margin: 6px;
+    background: oklch(100% 0 0 / 0.08);
+    flex: none;
+    height: 1px;
 }

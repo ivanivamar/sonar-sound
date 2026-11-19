@@ -1,0 +1,6 @@
+.albums-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 168px);
+    gap: 28px 20px;
+    margin-top: var(--space-3);
+}

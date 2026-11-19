@@ -1,6 +1,6 @@
 import { rxResource } from '@angular/core/rxjs-interop';
 import { computed, Service, inject } from '@angular/core';
-import { LibraryFile } from './library-file.model';
+import { ArtistFile, LibraryFile } from './library-file.model';
 import { AuthService } from '../auth/auth.service';
 import { DriveService } from '../drive/drive.service';
 
@@ -29,11 +29,30 @@ export class LibraryService {
     private readonly artistsById = computed(() => this.libraryFile.value()?.artists ?? {});
     private readonly tracksById = computed(() => this.libraryFile.value()?.tracks ?? {});
 
+    readonly allCount = computed(() => this.albums().length + this.artists().length);
+
+
     /** All loaded albums as an array; empty until album data is available. */
     readonly albums = computed(() => Object.values(this.albumsById()));
 
     /** All loaded artists as an array; empty until artist data is available. */
-    readonly artists = computed(() => Object.values(this.artistsById()));
+    readonly artists = computed(() => {
+        const albumsByArtist = new Map<string, ArtistFile>();
+
+        for (const album of this.albums()) {
+            const existing = albumsByArtist.get(album.artistId);
+            if (existing) {
+                existing.albums++;
+            } else {
+                albumsByArtist.set(album.artistId, {
+                    ...this.artistsById()[album.artistId],
+                    albums: 1,
+                });
+            }
+        }
+
+        return [...albumsByArtist.values()].sort((a, b) => a.name.localeCompare(b.name));
+    });
 
     /** All loaded tracks as an array; empty until track data is available. */
     readonly tracks = computed(() => Object.values(this.tracksById()));
@@ -79,6 +98,19 @@ export class LibraryService {
      * @returns The matching albums, or an empty array if the artist is not loaded.
      */
     getArtistAlbums(artistId: string) {
-        return Object.values(this.albumsById()).filter((album) => album.artistId === artistId);
+        return Object.values(this.albumsById())
+            .filter((album) => album.artistId === artistId)
+            .sort((a, b) => (b.year ?? 0) - (a.year ?? 0)
+                || new Date(b.addedAt ?? 0).getTime() - new Date(a.addedAt ?? 0).getTime());
+    }
+
+    /**
+     * Returns the tracks associated with an artist.
+     *
+     * @param artistId ID of the artist whose tracks to retrieve.
+     * @returns The matching tracks, or an empty array if the artist is not loaded.
+     */
+    getArtistTracks(artistId: string) {
+        return Object.values(this.tracksById()).filter((track) => track.artistId === artistId);
     }
 }

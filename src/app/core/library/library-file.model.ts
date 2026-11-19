@@ -10,6 +10,17 @@ export interface ArtistFile {
     id: string;
     name: string;
     addedAt: string;
+    dir: string;
+    mbid: string;
+    deezerId: number;
+    image: Image;
+    albums: number;
+}
+
+export interface Image {
+    id: string;
+    v: number;
+    source: string;
 }
 
 export interface AlbumFile {

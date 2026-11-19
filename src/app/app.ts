@@ -3,10 +3,11 @@ import { Router, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth/auth.service';
 import { Sidebar } from './shared/components/sidebar/sidebar';
 import { Atmosphere } from './shared/components/atmosphere/atmosphere';
+import { Topbar } from './shared/components/topbar/topbar';
 
 @Component({
     selector: 'app-root',
-    imports: [RouterOutlet, Sidebar, Atmosphere],
+    imports: [RouterOutlet, Sidebar, Atmosphere, Topbar],
     templateUrl: './app.html',
     styleUrl: './app.scss',
 })

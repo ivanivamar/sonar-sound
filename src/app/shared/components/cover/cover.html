@@ -1,9 +1,11 @@
-@if (coverResource.value() && !failed()) {
-    <div class="album-cover">
-        <img [src]="coverResource.value()" (error)="failed.set(true)" alt />
-    </div>
+@if (imageUrl(); as url) {
+    @if (!failed()) {
+        <div class="cover">
+            <img [src]="url" (error)="failed.set(true)" alt />
+        </div>
+    } @else {
+        <app-cover-placeholder [initials]="initials()" />
+    }
 } @else {
-    <div class="album-cover placeholder">
-        <span class="material-symbols-outlined"> album </span>
-    </div>
+    <app-cover-placeholder [initials]="initials()" />
 }

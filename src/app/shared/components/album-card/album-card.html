@@ -2,11 +2,11 @@
     @defer (on viewport) {
         <app-cover [cover]="album().cover"></app-cover>
     } @placeholder {
-        <div class="album-cover-placeholder"></div>
+        <app-cover-placeholder></app-cover-placeholder>
     }
 
     <div class="album-info">
-        <span class="album-title">{{ album().title }}</span>
+        <span class="album-title" [title]="album().title">{{ album().title }}</span>
         <div class="album-meta">
             <span class="album-artist">{{ album().artist }}</span>
             ·

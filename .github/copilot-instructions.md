@@ -1,4 +1,4 @@
-You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
+This project uses Angular 22 and TypeScript. Write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
 
 ## TypeScript Best Practices
 
@@ -54,3 +54,8 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Use the `providedIn: 'root'` option for singleton services
 - Prefer the `@Service` decorator over `@Injectable({providedIn: 'root'})` for new singleton services (Angular v22+)
 - Use the `inject()` function instead of constructor injection
+
+## Icons
+
+- Use the existing Material Symbols Rounded font with the `material-symbols-rounded` class for icons, not the outlined or sharp variants.
+- Hide decorative icons from assistive technology with `aria-hidden="true"`; give icon-only controls an accessible name.

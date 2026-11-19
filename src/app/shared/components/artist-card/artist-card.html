@@ -1,0 +1,12 @@
+<div class="artist-card" (click)="goToArtist()" (keypress)="goToArtist()" tabindex="0">
+    @defer (on viewport) {
+        <app-cover [cover]="artist().image?.id" [name]="artist().name"></app-cover>
+    } @placeholder {
+        <div class="cover-placeholder"></div>
+    }
+
+    <div class="artist-info">
+        <span class="artist-title">{{ artist().name }}</span>
+        <span class="artist-albums">{{ artist().albums }} albums</span>
+    </div>
+</div>

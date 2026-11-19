@@ -1,0 +1,59 @@
+.crumbs {
+    z-index: 1;
+    left: 44px;
+    letter-spacing: 0.14em;
+    color: rgb(166, 166, 172);
+    font-size: 10px;
+    position: absolute;
+    top: 96px;
+    margin: 0px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .crumbs-back {
+        cursor: pointer;
+        width: 28px;
+        height: 28px;
+        color: var(--ink-secondary);
+        justify-content: center;
+        align-items: center;
+        margin-left: -8px;
+        font-size: 16px;
+        display: inline-flex;
+        background: 0px 0px;
+        border-width: 0px;
+        border-style: none;
+        border-color: currentcolor;
+        border-image: none;
+        border-radius: 8px;
+        transition:
+            background 0.3s,
+            color 0.3s;
+
+        &:hover {
+            color: var(--ink-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+    }
+
+    .crumb {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        color: var(--ink-secondary);
+        text-transform: uppercase;
+        transition: color 0.3s;
+        text-decoration: none;
+
+        &:hover {
+            color: var(--ink-primary);
+        }
+    }
+
+    .crumb-separator {
+        font-family: var(--font-mono);
+        color: var(--ink-secondary);
+        font-size: 10px;
+    }
+}

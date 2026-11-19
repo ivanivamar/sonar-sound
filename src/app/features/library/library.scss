@@ -1,6 +1,12 @@
-.albums-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 168px);
-    gap: 28px 20px;
-    margin-top: var(--space-3);
+.library-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: 0 44px;
+
+    .sticky-tabs {
+        position: sticky;
+        top: 12px;
+        z-index: 6;
+    }
 }

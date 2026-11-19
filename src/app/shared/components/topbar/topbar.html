@@ -1,0 +1,8 @@
+<header class="topbar">
+    @if (content.left(); as left) {
+        <div class="topbar-left">
+            <ng-container [ngTemplateOutlet]="left"></ng-container>
+        </div>
+    }
+    <app-search [value]="q()" (returnSearch)="onSearch($event)"></app-search>
+</header>

@@ -12,6 +12,18 @@ Import `Ripple` from `src/app/shared/directives/ripple` in a component's `import
 
 The ripple starts at the pointer position, uses the element's text color by default, and respects reduced-motion preferences. Set `--ripple-color` on the element to override the color. Disabled elements do not ripple.
 
+## Topbar content
+
+Import `TopbarLeft` from `src/app/shared/components/topbar/topbar-left` in a component's `imports` and mark an `ng-template` with `appTopbarLeft`:
+
+```html
+<ng-template appTopbarLeft>
+    <button type="button" (click)="goBack()">Back</button>
+</ng-template>
+```
+
+The template appears to the left of the search field and retains its declaring component's bindings. It is removed when its view is destroyed. If multiple templates are active, the most recently registered one is shown; the previous one returns when it is removed.
+
 ## Development server
 
 To start a local development server, run:

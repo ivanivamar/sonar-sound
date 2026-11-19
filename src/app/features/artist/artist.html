@@ -1,0 +1,52 @@
+@if (libraryService.isLoading()) {
+    <span>Loading...</span>
+} @else {
+    <section class="artist-wrapper">
+        @if (!artist()) {
+            <span>Artist not found</span>
+        } @else {
+            <header class="artist-header">
+                <div class="artist-bg">
+                    <div
+                        class="artist-banner"
+                        [style.background-image]="coverUrl() ? 'url(' + coverUrl() + ')' : null"
+                    ></div>
+                    <div class="artist-scan"></div>
+                    <div class="artist-fade"></div>
+                </div>
+                <app-crumbs [crumbs]="crumbs()"></app-crumbs>
+                <div class="artist-data">
+                    <app-cover [resolvedUrl]="coverUrl()" [name]="artist()?.name"></app-cover>
+                    <div class="artist-text">
+                        <div class="artist-meta">Artist</div>
+                        <h1 class="artist-name">{{ artist()?.name }}</h1>
+                        <div class="artist-stats">
+                            {{ albums().length }} releases · {{ tracks().length }} tracks ·
+                            {{ totalDuration() | duration }}
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="artist-cols">
+                <div class="artist-left">
+                    <span class="section-label"> Most played here </span>
+                </div>
+                <div class="artist-disco">
+                    @for (albumGroup of albumGroups(); track albumGroup.type) {
+                        <span class="section-label">{{ albumGroup.type }}</span>
+
+                        <div class="disco-grid">
+                            @for (album of albumGroup.albums; track album.id) {
+                                <app-album-card
+                                    [album]="album"
+                                    (albumClick)="goToAlbum($event)"
+                                ></app-album-card>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </section>
+}

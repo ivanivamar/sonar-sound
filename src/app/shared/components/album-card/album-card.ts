@@ -1,9 +1,10 @@
 import { Component, input, output } from '@angular/core';
 import { AlbumFile } from '../../../core/library/library-file.model';
 import { Cover } from '../cover/cover';
+import { CoverPlaceholder } from '../cover/cover-placeholder';
 
 @Component({
-    imports: [Cover],
+    imports: [Cover, CoverPlaceholder],
     selector: 'app-album-card',
     styleUrl: './album-card.scss',
     templateUrl: './album-card.html',

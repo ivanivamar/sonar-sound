@@ -30,5 +30,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/album/album').then((m) => m.Album),
         pathMatch: 'full',
         canActivate: [authGuard],
+    },
+    {
+        path: 'library/artist/:id',
+        loadComponent: () => import('./features/artist/artist').then((m) => m.Artist),
+        pathMatch: 'full',
+        canActivate: [authGuard],
     }
 ];

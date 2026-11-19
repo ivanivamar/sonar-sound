@@ -1,0 +1,11 @@
+<div class="artists-grid">
+    @if (artists().length === 0) {
+        <span>No artists found.</span>
+    }
+    @for (artist of artists(); track $index) {
+        <app-artist-card
+            [artist]="artist"
+            (artistClick)="artistClick.emit($event)"
+        ></app-artist-card>
+    }
+</div>

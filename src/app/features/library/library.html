@@ -1,14 +1,36 @@
 @if (libraryService.isLoading()) {
     <span>Loading...</span>
 } @else {
-    <app-search [value]="q()" (returnSearch)="onSearch($event)"></app-search>
+    <ng-template appTopbarLeft>
+        <div class="vertical">
+            <h1 class="topbar-title">Library</h1>
+        </div>
+    </ng-template>
 
-    <div class="albums-grid">
-        @if (filteredAlbums().length === 0) {
-            <span>No albums found.</span>
-        }
-        @for (album of filteredAlbums(); track $index) {
-            <app-album-card [album]="album" (albumClick)="goToAlbum($event)"></app-album-card>
+    <div class="library-container">
+        <div class="sticky-tabs">
+            <app-tabs
+                [tabs]="tabs()"
+                [currentTab]="currentTab()"
+                (currentTabChange)="currentTab.set($event)"
+            ></app-tabs>
+        </div>
+
+        @switch (currentTab()) {
+            @case ('All') {}
+            @case ('Albums') {
+                <app-albums
+                    [albums]="libraryService.albums()"
+                    (albumClick)="goToAlbum($event)"
+                ></app-albums>
+            }
+            @case ('Artists') {
+                <app-artists
+                    [artists]="libraryService.artists()"
+                    (artistClick)="goToArtist($event)"
+                ></app-artists>
+            }
+            @case ('Tracks') {}
         }
     </div>
 }

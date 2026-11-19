@@ -1,0 +1,11 @@
+<nav class="crumbs">
+    <button class="crumbs-back" (click)="goBack()">
+        <i class="material-symbols-rounded">keyboard_arrow_left</i>
+    </button>
+    @for (crumb of crumbs(); track $index; let index = $index) {
+        <a class="crumb" [routerLink]="crumb.url">{{ crumb.label }}</a>
+        @if (index < crumbs().length - 1) {
+            <span class="crumb-separator">/</span>
+        }
+    }
+</nav>

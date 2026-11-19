@@ -1,14 +1,15 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DriveService } from '../../core/drive/drive.service';
 import { AuthService } from '../../core/auth/auth.service';
-import { normalizeForSearch } from '../../shared/functions/texts';
 import { LibraryService } from '../../core/library/library.service';
-import { AlbumCard } from '../../shared/components/album-card/album-card';
 import { Router } from '@angular/router';
-import { Search } from '../../shared/components/search/search';
+import { TopbarLeft } from '../../shared/components/topbar/topbar-left';
+import { TabItem, Tabs } from '../../shared/components/tabs/tabs';
+import { Albums } from './albums/albums';
+import { Artists } from './artists/artists';
 
 @Component({
-    imports: [AlbumCard, Search],
+    imports: [TopbarLeft, Tabs, Albums, Artists],
     selector: 'app-library',
     styleUrl: './library.scss',
     templateUrl: './library.html',
@@ -19,32 +20,31 @@ export class Library {
     authService = inject(AuthService);
     router = inject(Router);
 
-    readonly q = input('', { transform: (v: string | undefined) => v ?? '' });
-    filteredAlbums = computed(() => {
-        const filter = this.q();
-        if (!filter) {
-            return this.libraryService.albums();
+    tabs = computed<TabItem[]>(() => [
+        {
+            title: 'All',
+            hint: this.libraryService.allCount().toString()
+        },
+        {
+            title: 'Albums',
+            hint: this.libraryService.albums().length.toString()
+        },
+        {
+            title: 'Artists',
+            hint: this.libraryService.artists().length.toString()
+        },
+        {
+            title: 'Tracks',
+            hint: this.libraryService.tracks().length.toString()
         }
-
-        // normalize the filter string for case-insensitive comparison and accent-insensitive comparison if needed
-        const normalizedFilter = normalizeForSearch(filter);
-
-        // filter by album title, artist, or other criteria if needed
-        return this.libraryService.albums().filter(album =>
-            normalizeForSearch(album.title).includes(normalizedFilter) ||
-            normalizeForSearch(album.artist).includes(normalizedFilter)
-        );
-    });
-
-    onSearch(value: string) {
-        this.router.navigate([], {
-            queryParams: { q: value || null },
-            queryParamsHandling: 'merge',
-            replaceUrl: true,
-        });
-    }
+    ]);
+    currentTab = signal<string>('All');
 
     goToAlbum(albumId: string) {
         this.router.navigate(['/library/album', albumId]);
+    }
+
+    goToArtist(artistId: string) {
+        this.router.navigate(['/library/artist', artistId]);
     }
 }

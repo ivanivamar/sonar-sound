@@ -27,6 +27,21 @@
                 </div>
             </header>
 
+            <!-- <header class="album-header">
+                <app-crumbs [crumbs]="crumbs()"></app-crumbs>
+                <div class="artist-data">
+                    <app-cover [resolvedUrl]="coverUrl()" [name]="artist()?.name"></app-cover>
+                    <div class="artist-text">
+                        <div class="artist-meta">Artist</div>
+                        <h1 class="artist-name">{{ artist()?.name }}</h1>
+                        <div class="artist-stats">
+                            {{ albums().length }} releases · {{ tracks().length }} tracks ·
+                            {{ totalDuration() | duration }}
+                        </div>
+                    </div>
+                </div>
+            </header> -->
+
             <div class="album-tracks">
                 @for (disc of discGroups(); track disc.disc) {
                     <div class="album-disk">

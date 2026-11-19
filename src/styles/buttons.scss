@@ -33,3 +33,52 @@
         }
     }
 }
+
+.button-icon {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 12px;
+    height: 46px;
+    width: 46px;
+    border-radius: 8px;
+    border: none;
+
+    i {
+        font-size: 14px;
+        line-height: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    &.btn-sm {
+        height: 26px;
+        width: 26px;
+    }
+
+    &.button-filled {
+        background-color: var(--ink-primary);
+        color: var(--bg-1);
+        box-shadow: 0 0 30px -10px #ffffff73;
+
+        &:hover {
+            box-shadow: var(--glow-primary-hover);
+            background: #fff;
+            transform: translateY(-1px);
+        }
+    }
+
+    &.btn-text {
+        background: none;
+        color: inherit;
+        box-shadow: none;
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.08);
+        }
+    }
+}

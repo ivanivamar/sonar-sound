@@ -1,20 +1,74 @@
 :host {
     display: block;
     aspect-ratio: 1;
-    overflow: hidden;
-    border-radius: var(--cover-radius, 8px);
-    background: #ddd;
+    background: transparent;
 }
 
-img {
+.cover {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    display: block;
-}
+    border-radius: var(--cover-radius);
+    box-shadow: rgba(255, 255, 255, 0.2) 0px 1px inset;
 
-.album-cover {
-    width: 100%;
-    height: 100%;
-    border-radius: 12px;
+    transform-origin: 50% 60%;
+    outline-offset: 2px;
+    transition:
+        box-shadow 0.45s var(--ease-std),
+        outline-color 0.2s var(--ease-std),
+        outline-offset 0.25s var(--ease-std);
+    outline: 1.5px solid #0000;
+    flex: none;
+    margin-bottom: 8px;
+    position: relative;
+    transition:
+        transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+        outline-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        outline-offset 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.45s var(--ease-std);
+
+    &.placeholder {
+        background-color: var(--bg-1);
+        position: relative;
+        border: 1px solid var(--ink-primary);
+        border-radius: var(--cover-radius);
+
+        .placeholder-initials {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--ink-primary);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            display: block;
+            width: 100%;
+            height: 1px;
+            background-color: var(--ink-primary);
+        }
+    }
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        border-radius: inherit;
+    }
+
+    .cover:hover,
+    :host-context(.album-card:hover) .cover,
+    :host-context(.artist-card:hover) .cover {
+        transform: translateY(-4px);
+        outline-offset: 5px;
+        outline-color: #ffffffd9;
+    }
 }

@@ -8,6 +8,9 @@ import { Component, OnDestroy, output, input } from '@angular/core';
 })
 export class Search implements OnDestroy {
     value = input('');
+    isSmall = input(false);
+    placeholder = input('Search...');
+
     returnSearch = output<string>();
 
     private readonly debounceMs = 150;

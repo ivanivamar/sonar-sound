@@ -1,4 +1,4 @@
-<div class="search-wrapper">
+<div class="search-wrapper" [class.search-sm]="isSmall()">
     <i class="material-symbols-rounded">search</i>
     <input
         class="search-bar"
@@ -6,6 +6,6 @@
         aria-label="Search albums"
         [value]="value()"
         (input)="onInput($any($event.target).value)"
-        placeholder="Search..."
+        [placeholder]="placeholder()"
     />
 </div>

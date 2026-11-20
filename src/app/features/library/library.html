@@ -12,25 +12,28 @@
             <app-tabs
                 [tabs]="tabs()"
                 [currentTab]="currentTab()"
-                (currentTabChange)="currentTab.set($event)"
+                (currentTabChange)="selectTab($event)"
             ></app-tabs>
         </div>
 
         @switch (currentTab()) {
-            @case ('All') {}
-            @case ('Albums') {
+            @case ('all') {}
+            @case ('albums') {
                 <app-albums
                     [albums]="libraryService.albums()"
                     (albumClick)="goToAlbum($event)"
                 ></app-albums>
             }
-            @case ('Artists') {
+
+            @case ('artists') {
                 <app-artists
                     [artists]="libraryService.artists()"
                     (artistClick)="goToArtist($event)"
                 ></app-artists>
             }
-            @case ('Tracks') {}
+            @case ('tracks') {
+                <app-tracks [tracks]="libraryService.trackRows()"></app-tracks>
+            }
         }
     </div>
 }

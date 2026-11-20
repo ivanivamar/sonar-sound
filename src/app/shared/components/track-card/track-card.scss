@@ -1,47 +1,86 @@
 .track-card {
-    display: grid;
-    grid-template-columns: 2.5rem 1fr auto; // number | title + artist | duration
-    align-items: center;
-    column-gap: var(--space-3);
-    padding: var(--space-2) var(--space-4);
-    min-height: 56px; // comfortable tap target, even with no artist line
-    border-radius: var(--space-2);
-    min-height: 56px;
-    transition: background-color ease-in-out 0.3s;
+    transition:
+        background-color 0.25s var(--ease),
+        box-shadow 0.25s var(--ease);
+    border-radius: 12px;
     cursor: pointer;
+    grid-template-columns: var(--track-columns);
+    box-sizing: border-box;
+    height: 54px;
+    color: var(--ink-primary);
+    align-items: center;
+    column-gap: 14px;
+    padding: 0 14px;
+    font-size: 14px;
+    display: grid;
+    position: relative;
 
     &:hover {
-        background-color: #eee;
+        background-color: #ffffff0b;
     }
 
-    .track-number {
+    .lead {
         font-size: 16px;
         font-weight: bold;
         color: #666;
     }
 
+    app-cover {
+        width: 40px;
+        --cover-radius: var(--space-2);
+    }
+
     .track-info {
-        display: flex;
         flex-direction: column;
-        gap: 4px;
-        min-width: 0; // allow text to truncate
+        gap: 2px;
+        min-width: 0;
+        display: flex;
 
         .track-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .track-artist {
+            white-space: nowrap;
+            align-items: center;
+            min-width: 0;
             font-size: 14px;
-            color: #666;
+            font-weight: 500;
+            display: flex;
+            text-overflow: ellipsis;
+            transition:
+                color 0.3s,
+                text-shadow 0.3s;
+            overflow: hidden;
+            color: var(--ink-primary);
         }
     }
 
+    .track-artist,
+    .track-album {
+        min-width: 0;
+        color: var(--ink-secondary);
+        white-space: nowrap;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        display: flex;
+        text-decoration: none;
+        text-underline-offset: 3px;
+        transition:
+            color 0.3s var(--ease),
+            text-decoration 0.3s var(--ease);
+        width: fit-content;
+        font-family: var(--font-family);
+
+        &:hover {
+            text-decoration: underline;
+            color: var(--ink-primary);
+        }
+    }
     // goes to the right side of the card
     .track-duration {
         margin-left: auto;
-        font-size: 14px;
-        color: #666;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--ink-secondary);
+        text-align: right;
+        font-variant-numeric: tabular-nums;
     }
 }

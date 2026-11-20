@@ -1,0 +1,27 @@
+<div class="tracks-wrapper">
+    <div class="filters-wrapper">
+        <app-tabs
+            [tabs]="tabs"
+            [currentTab]="selectedTab()"
+            (currentTabChange)="filterTracks($event)"
+        ></app-tabs>
+        <app-search
+            [isSmall]="true"
+            placeholder="Filter songs"
+            (returnSearch)="searchTracks($event)"
+        ></app-search>
+    </div>
+
+    <div class="tracks-header">
+        <span></span>
+        <span>Title</span>
+        <span>Album</span>
+        <span></span>
+        <span>Time</span>
+    </div>
+    <cdk-virtual-scroll-viewport itemSize="56">
+        <div *cdkVirtualFor="let track of filteredTracks(); trackBy: trackById" class="track-list">
+            <app-track-card [track]="track"></app-track-card>
+        </div>
+    </cdk-virtual-scroll-viewport>
+</div>

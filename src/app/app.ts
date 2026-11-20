@@ -4,10 +4,11 @@ import { AuthService } from './core/auth/auth.service';
 import { Sidebar } from './shared/components/sidebar/sidebar';
 import { Atmosphere } from './shared/components/atmosphere/atmosphere';
 import { Topbar } from './shared/components/topbar/topbar';
+import { CdkVirtualScrollableElement } from '@angular/cdk/scrolling';
 
 @Component({
     selector: 'app-root',
-    imports: [RouterOutlet, Sidebar, Atmosphere, Topbar],
+    imports: [RouterOutlet, Sidebar, Atmosphere, Topbar, CdkVirtualScrollableElement],
     templateUrl: './app.html',
     styleUrl: './app.scss',
 })

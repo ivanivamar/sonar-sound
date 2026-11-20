@@ -1,0 +1,30 @@
+:host {
+    .tracks-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        --track-columns: 40px minmax(0, 1.4fr) minmax(0, 1fr) 96px 32px 52px 32px;
+
+        .filters-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: end;
+            gap: 16px;
+        }
+
+        .tracks-header {
+            height: 32px;
+            font-family: var(--font-mono);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--ink-secondary);
+            border-bottom: 1px solid var(--hairline);
+            border-radius: 0;
+            margin-bottom: 4px;
+            font-size: 9px;
+            grid-template-columns: var(--track-columns);
+            display: grid;
+            column-gap: 14px;
+        }
+    }
+}

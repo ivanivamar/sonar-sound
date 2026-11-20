@@ -57,6 +57,17 @@ export class LibraryService {
     /** All loaded tracks as an array; empty until track data is available. */
     readonly tracks = computed(() => Object.values(this.tracksById()));
 
+    readonly trackRows = computed(() => {
+        return Object.values(this.tracksById()).map((track) => {
+            const album = this.getAlbumById(track.albumId);
+            return {
+                ...track,
+                cover: album?.cover ?? null,
+                albumTitle: album?.title ?? '',
+            };
+        });
+    });
+
     /**
      * Finds an album by its ID.
      *

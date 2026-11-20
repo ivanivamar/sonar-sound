@@ -19,12 +19,18 @@ export const routes: Routes = [
         pathMatch: 'full',
         canActivate: [authGuard],
     },
-    {
-        path: 'library',
+    ...[
+        { path: 'library', tab: 'all' },
+        { path: 'library/albums', tab: 'albums' },
+        { path: 'library/artists', tab: 'artists' },
+        { path: 'library/tracks', tab: 'tracks' },
+    ].map(({ path, tab }) => ({
+        path,
+        pathMatch: 'full' as const,
         loadComponent: () => import('./features/library/library').then((m) => m.Library),
-        pathMatch: 'full',
         canActivate: [authGuard],
-    },
+        data: { tab },
+    })),
     {
         path: 'library/album/:id',
         loadComponent: () => import('./features/album/album').then((m) => m.Album),

@@ -1,8 +1,8 @@
 <div class="tabs-wrapper">
-    @for (tab of tabs(); track $index) {
+    @for (tab of tabs(); track tab.id) {
         <button
             class="tab"
-            [class.active]="tab.title === currentTab()"
+            [class.active]="tab.id === currentTab()"
             appRipple
             (click)="onTabClick(tab)"
         >

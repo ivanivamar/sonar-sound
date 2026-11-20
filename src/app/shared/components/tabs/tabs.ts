@@ -13,11 +13,12 @@ export class Tabs {
     readonly currentTabChange = output<string>();
 
     onTabClick(tab: TabItem) {
-        this.currentTabChange.emit(tab.title);
+        this.currentTabChange.emit(tab.id);
     }
 }
 
 export interface TabItem {
+    id: string;
     icon?: string;
     title: string;
     hint?: string;

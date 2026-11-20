@@ -21,7 +21,8 @@
                 z-index: -1;
                 pointer-events: none;
                 position: absolute;
-                inset: -30px;
+                inset: -36px -36px -140px; // top, sides, bottom: more room below for the fade
+                mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
                 overflow: hidden;
 
                 .artist-banner {
@@ -29,7 +30,7 @@
                     background-size: cover;
                     position: absolute;
                     transform: scale(1.1);
-                    background-position: 50% 30%;
+                    background-position: 50% 20%;
                     inset: -40px;
                 }
 
@@ -51,9 +52,8 @@
                     background: linear-gradient(
                         rgba(13, 13, 15, 0.2) 0%,
                         rgba(13, 13, 15, 0.35) 45%,
-                        rgb(13, 13, 15) 100%
+                        rgb(13, 13, 15, 0.6) 100%
                     );
-                    box-shadow: inset 0px 0px 40px rgba(0, 0, 0, 0.5);
                     inset: 0px;
                 }
             }

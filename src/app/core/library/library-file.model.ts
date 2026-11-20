@@ -52,6 +52,11 @@ export interface TrackFile {
     addedAt: string;
 }
 
+export interface TrackRow extends TrackFile {
+    cover?: string | null;
+    albumTitle?: string;
+}
+
 export interface DriveFile {
     id: string;
     size: number;

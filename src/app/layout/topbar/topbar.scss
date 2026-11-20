@@ -1,0 +1,37 @@
+.topbar {
+    z-index: 7;
+    box-sizing: border-box;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 14px;
+    height: 78px;
+    margin-bottom: 4px;
+    padding: 0 44px;
+    transition:
+        background-color 0.35s,
+        box-shadow 0.35s,
+        -webkit-backdrop-filter 0.35s,
+        backdrop-filter 0.35s;
+    display: flex;
+    position: sticky;
+    top: 0;
+
+    .topbar-left {
+        flex: 1;
+        min-width: 0;
+
+        ::ng-deep .vertical {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        ::ng-deep .topbar-title {
+            font-size: 32px;
+            margin: 0;
+            font-weight: 500;
+            line-height: 0.95;
+        }
+    }
+}

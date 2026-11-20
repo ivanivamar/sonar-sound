@@ -3,8 +3,11 @@ import { Location } from '@angular/common';
 import { LibraryService } from '../../core/library/library.service';
 import { Router } from '@angular/router';
 import { AlbumFile, TrackFile } from '../../core/library/library-file.model';
-import { TrackCard } from '../../shared/components/track-card/track-card';
-import { Cover } from '../../shared/components/cover/cover';
+import { TrackCard } from '../../shared/media/track-card/track-card';
+import { Cover } from '../../shared/media/cover/cover';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { atmosphere } from '../../layout/atmosphere/atmosphere.service';
+import { CoverColorService } from '../../core/cover/cover-color.service';
 
 export interface DiscGroup {
     disc: number;
@@ -21,6 +24,7 @@ export class Album {
     private readonly libraryService = inject(LibraryService);
     private readonly router = inject(Router);
     private readonly location = inject(Location);
+    private readonly coverColorService = inject(CoverColorService);
 
     readonly id = input.required<string>();
 
@@ -36,6 +40,23 @@ export class Album {
         }
         return Array.from(map.entries()).map(([disc, tracks]) => ({ disc, tracks }));
     });
+
+    private readonly coverColor = rxResource({
+        params: () => this.album()?.cover ?? undefined,
+        stream: ({ params }) => this.coverColorService.getColor(params),
+    });
+
+    constructor() {
+        atmosphere(() => {
+            const color = this.coverColor.hasValue() ? this.coverColor.value() : null;
+            return {
+                x: '18%',
+                y: '22%',
+                hue: color ? String(color.hue) : null,       // null until read: the playing cover's colour
+                chroma: color ? String(color.chroma) : null,
+            };
+        });
+    }
 
     goBack() {
         const state = this.location.getState() as { navigationId?: number } | null;

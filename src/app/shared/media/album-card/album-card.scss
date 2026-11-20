@@ -1,0 +1,66 @@
+.album-card {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+    width: 100%;
+
+    .cover-wrapper {
+        position: relative;
+        isolation: isolate;
+        width: var(--album-card-width, 168px);
+
+        app-cover {
+            --cover-radius: 12px;
+            width: var(--album-card-width, 168px);
+        }
+
+        &::before {
+            content: '';
+            position: absolute;
+            z-index: -1;
+            inset: auto 0 -12px;
+            height: 35%;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(20px);
+            transition:
+                background 0.3s ease-in-out,
+                transform 0.3s ease-in-out;
+        }
+    }
+
+    &:hover {
+        .cover-wrapper::before {
+            background: var(--glow-color);
+            transform: translateY(10px);
+        }
+    }
+
+    .album-info {
+        margin-top: 8px;
+        display: flex;
+        flex-direction: column;
+
+        .album-title {
+            font-size: 14px;
+            font-weight: bold;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .album-meta {
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+
+            .album-artist,
+            .album-year {
+                font-size: 13px;
+                color: #666;
+                z-index: 1;
+            }
+        }
+    }
+}

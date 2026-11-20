@@ -1,36 +1,105 @@
-.atm {
-    pointer-events: none;
-    z-index: 0;
+@property --atmosphere-accent-hue {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 220;
+}
+@property --atmosphere-accent-chroma {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 1;
+}
+@keyframes atm-breathe {
+    0%,
+    100% {
+        opacity: 0.55;
+        scale: 1;
+    }
+    50% {
+        opacity: 0.95;
+        scale: 1.1;
+    }
+}
+
+@keyframes atm-rings-drift {
+    0%,
+    100% {
+        scale: 1;
+        rotate: 0deg;
+    }
+    50% {
+        scale: 1.04;
+        rotate: 1.5deg;
+    }
+}
+
+:host {
+    // motion
+    --atmosphere-easing: cubic-bezier(0.22, 1, 0.36, 1);
+    --atmosphere-move-duration: 0.8s;
+    --atmosphere-color-duration: 1s;
+    --atmosphere-breathe-duration: 7s;
+
+    // sizes
+    --atmosphere-rings-width: 2320px;
+    --atmosphere-rings-height: 1780px;
+    --atmosphere-glow-width: 1350px;
+    --atmosphere-glow-height: 900px;
+
     position: absolute;
-    inset: 0;
-    overflow: hidden;
+    z-index: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    left: var(--atmosphere-center-x);
+    top: var(--atmosphere-center-y);
+    scale: var(--atmosphere-scale);
+    transition:
+        left var(--atmosphere-move-duration) var(--atmosphere-easing),
+        top var(--atmosphere-move-duration) var(--atmosphere-easing),
+        scale var(--atmosphere-move-duration) var(--atmosphere-easing);
 
-    --hc: 1;
-    --h: 215;
-
-    &.atm-fixed {
-        position: fixed;
+    > * {
+        position: absolute;
+        left: 0;
+        top: 0;
     }
 
-    .atm-wash {
-        background: radial-gradient(
-            ellipse 55% 55% at 62% 50%,
-            oklch(0.4 calc(0.12 * var(--hc, 1) + 0.01) var(--h) / 0.34),
-            oklch(0.24 calc(0.07 * var(--hc, 1) + 0.005) var(--h) / 0.14) 45%,
-            transparent 72%
-        );
-        height: 95%;
-        position: absolute;
-        top: -35%;
-        left: -10%;
-        right: -10%;
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
     }
+}
 
-    .atm-rings {
-        width: 100%;
-        height: 100%;
-        color: oklch(0.86 calc(0.04 * var(--hc, 1)) var(--h));
-        position: absolute;
-        inset: 0;
+.atm-rings {
+    // the page's accent, or the playing cover's when the page sets none
+    --rings-hue: var(--atmosphere-accent-hue, var(--h, 220));
+    --rings-chroma: var(--atmosphere-accent-chroma, var(--hc, 1));
+
+    width: var(--atmosphere-rings-width);
+    height: var(--atmosphere-rings-height);
+    overflow: visible;
+    translate: -50% -50%;
+    color: oklch(0.86 calc(0.04 * var(--rings-chroma)) var(--rings-hue));
+    transition: color var(--atmosphere-color-duration);
+}
+
+.atm-glow {
+    --glow-hue: var(--atmosphere-accent-hue, var(--h, 220));
+    --glow-chroma: var(--atmosphere-accent-chroma, var(--hc, 1));
+
+    width: var(--atmosphere-glow-width);
+    height: var(--atmosphere-glow-height);
+    translate: calc(-50% + var(--atmosphere-glow-offset-x))
+        calc(-50% + var(--atmosphere-glow-offset-y));
+    background: radial-gradient(
+        closest-side,
+        oklch(0.42 calc(0.14 * var(--glow-chroma)) var(--glow-hue) / 0.45),
+        oklch(0.25 calc(0.08 * var(--glow-chroma)) var(--glow-hue) / 0.18) 45%,
+        transparent 75%
+    );
+    animation: atm-breathe var(--atmosphere-breathe-duration) ease-in-out infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+        opacity: 0.75;
     }
 }

@@ -1,0 +1,25 @@
+<div class="artist-card" (click)="goToArtist()" (keypress)="goToArtist()" tabindex="0">
+    <div
+        class="cover-wrapper"
+        [style.--glow-color]="
+            coverColor.hasValue()
+                ? 'oklch(65% ' +
+                  coverColor.value().chroma * 0.18 +
+                  ' ' +
+                  coverColor.value().hue +
+                  ' / 0.65)'
+                : 'transparent'
+        "
+    >
+        @defer (on viewport) {
+            <app-cover [cover]="artist().image?.id" [name]="artist().name"></app-cover>
+        } @placeholder {
+            <div class="cover-placeholder"></div>
+        }
+    </div>
+
+    <div class="artist-info">
+        <span class="artist-title">{{ artist().name }}</span>
+        <span class="artist-albums">{{ artist().albums }} albums</span>
+    </div>
+</div>

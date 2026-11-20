@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { AlbumFile } from '../../../core/library/library-file.model';
-import { AlbumCard } from '../../../shared/components/album-card/album-card';
+import { AlbumCard } from '../../../shared/media/album-card/album-card';
 
 @Component({
     imports: [AlbumCard],

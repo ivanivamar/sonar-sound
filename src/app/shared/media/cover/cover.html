@@ -1,0 +1,11 @@
+@if (imageUrl(); as url) {
+    @if (!failed()) {
+        <div class="cover">
+            <img [src]="url" (error)="failed.set(true)" alt />
+        </div>
+    } @else {
+        <app-cover-placeholder [initials]="initials()" />
+    }
+} @else {
+    <app-cover-placeholder [initials]="initials()" />
+}

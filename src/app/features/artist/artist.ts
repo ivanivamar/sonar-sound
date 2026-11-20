@@ -2,12 +2,12 @@ import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { LibraryService } from '../../core/library/library.service';
 import { AlbumFile, ArtistFile, TrackFile } from '../../core/library/library-file.model';
-import { Cover } from '../../shared/components/cover/cover';
+import { Cover } from '../../shared/media/cover/cover';
 import { CoverService } from '../../core/cover/cover.service';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { Crumbs } from '../../shared/components/crumbs/crumbs';
+import { Crumbs } from '../../shared/ui/crumbs/crumbs';
 import { DurationPipe } from '../../shared/pipes/duration-pipe';
-import { AlbumCard } from '../../shared/components/album-card/album-card';
+import { AlbumCard } from '../../shared/media/album-card/album-card';
 
 @Component({
     imports: [Cover, Crumbs, DurationPipe, AlbumCard],

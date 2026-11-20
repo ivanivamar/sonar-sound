@@ -33,7 +33,8 @@ export class LibraryService {
 
 
     /** All loaded albums as an array; empty until album data is available. */
-    readonly albums = computed(() => Object.values(this.albumsById()));
+    readonly albums = computed(() => Object.values(this.albumsById())
+        .sort((a, b) => new Date(b.addedAt ?? 0).getTime() - new Date(a.addedAt ?? 0).getTime()));
 
     /** All loaded artists as an array; empty until artist data is available. */
     readonly artists = computed(() => {
@@ -51,7 +52,8 @@ export class LibraryService {
             }
         }
 
-        return [...albumsByArtist.values()].sort((a, b) => a.name.localeCompare(b.name));
+        return [...albumsByArtist.values()].sort((a, b) =>
+            new Date(b.addedAt ?? 0).getTime() - new Date(a.addedAt ?? 0).getTime());
     });
 
     /** All loaded tracks as an array; empty until track data is available. */

@@ -1,0 +1,17 @@
+<div class="track-card">
+    <div class="lead">
+        <ng-content select="[lead]">
+            <app-cover [cover]="track()?.cover"></app-cover>
+        </ng-content>
+    </div>
+    <div class="track-info">
+        <span class="track-title">{{ track()?.title }}</span>
+        <a [routerLink]="['/library/artist/', track()?.artistId]" class="track-artist">{{
+            track()?.artist
+        }}</a>
+    </div>
+    <a [routerLink]="['/library/album/', track()?.albumId]" class="track-album">{{
+        track()?.albumTitle
+    }}</a>
+    <span class="track-duration">{{ track()?.duration | duration }}</span>
+</div>

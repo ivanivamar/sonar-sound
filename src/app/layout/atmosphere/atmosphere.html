@@ -1,0 +1,19 @@
+<span class="atm-glow"></span>
+<svg class="atm-rings" viewBox="0 0 2320 1780" fill="none" stroke="currentColor" stroke-width="1">
+    @for (ring of rings; track $index) {
+        <path
+            [attr.d]="ring.from"
+            [attr.stroke-opacity]="ring.opacity"
+            vector-effect="non-scaling-stroke"
+        >
+            @if (motion()) {
+                <animate
+                    attributeName="d"
+                    dur="26s"
+                    repeatCount="indefinite"
+                    [attr.values]="ring.morph"
+                />
+            }
+        </path>
+    }
+</svg>

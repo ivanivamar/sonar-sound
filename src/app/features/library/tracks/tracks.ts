@@ -1,9 +1,9 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 import { TrackRow } from '../../../core/library/library-file.model';
-import { TrackCard } from '../../../shared/components/track-card/track-card';
+import { TrackCard } from '../../../shared/media/track-card/track-card';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { TabItem, Tabs } from '../../../shared/components/tabs/tabs';
-import { Search } from '../../../shared/components/search/search';
+import { TabItem, Tabs } from '../../../shared/ui/tabs/tabs';
+import { Search } from '../../../shared/ui/search/search';
 
 @Component({
     imports: [TrackCard, ScrollingModule, Tabs, Search],

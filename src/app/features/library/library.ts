@@ -3,12 +3,13 @@ import { DriveService } from '../../core/drive/drive.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { LibraryService } from '../../core/library/library.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TopbarLeft } from '../../shared/components/topbar/topbar-left';
-import { TabItem, Tabs } from '../../shared/components/tabs/tabs';
+import { TopbarLeft } from '../../layout/topbar/topbar-left';
+import { TabItem, Tabs } from '../../shared/ui/tabs/tabs';
 import { Albums } from './albums/albums';
 import { Artists } from './artists/artists';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Tracks } from './tracks/tracks';
+import { atmosphere } from '../../layout/atmosphere/atmosphere.service';
 
 @Component({
     imports: [TopbarLeft, Tabs, Albums, Artists, Tracks],
@@ -25,6 +26,10 @@ export class Library {
     private readonly routeData = toSignal(this.route.data, {
         initialValue: this.route.snapshot.data,
     });
+
+    constructor() {
+        atmosphere({ x: '730px', y: '130px', hue: '20', chroma: '1' });
+    }
 
     tabs = computed<TabItem[]>(() => [
         {

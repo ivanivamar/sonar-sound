@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { ArtistCard } from '../../../shared/components/artist-card/artist-card';
+import { ArtistCard } from '../../../shared/media/artist-card/artist-card';
 import { ArtistFile } from '../../../core/library/library-file.model';
 
 @Component({

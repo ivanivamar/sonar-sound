@@ -5,9 +5,27 @@
     transition: transform 0.2s ease-in-out;
     width: 100%;
 
-    app-cover {
-        --cover-radius: 12px;
+    .cover-wrapper {
+        position: relative;
+        isolation: isolate;
         width: var(--album-card-width, 168px);
+
+        &::before {
+            content: '';
+            position: absolute;
+            z-index: -1;
+            inset: auto 10% -12px;
+            height: 35%;
+            background: var(--glow-color);
+            filter: blur(20px);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        app-cover {
+            --cover-radius: 12px;
+            width: var(--album-card-width, 168px);
+        }
     }
 
     .album-info {

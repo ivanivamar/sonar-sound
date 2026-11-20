@@ -1,0 +1,170 @@
+.sidebar {
+    height: 100vh;
+    padding: 24px 18px 16px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    grid-area: side;
+    width: 272px;
+    z-index: 99999;
+
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+        }
+
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            .header-title {
+                white-space: nowrap;
+                font-size: 16px;
+                font-weight: 500;
+                color: var(--ink-primary);
+            }
+
+            .header-subtitle {
+                color: var(--ink-secondary);
+                font-size: 12px;
+            }
+        }
+    }
+
+    .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 16px;
+
+        .nav-item {
+            height: 46px;
+            color: var(--ink-secondary);
+            cursor: pointer;
+            border-radius: 13px;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 12px 6px 8px;
+            font-size: 15px;
+            font-weight: 500;
+            text-decoration: none;
+            transition:
+                color 0.5s,
+                background-color 0.2s var(--ease),
+                box-shadow 0.2s var(--ease);
+            display: flex;
+            position: relative;
+
+            &__icon {
+                font-size: 24px;
+            }
+
+            &__label {
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                flex: 1;
+                min-width: 0;
+                position: relative;
+                overflow: hidden;
+            }
+
+            &.active {
+                color: var(--ink-primary);
+                background: linear-gradient(#ffffff16, #ffffff09);
+                box-shadow:
+                    inset 0 1px #ffffff1c,
+                    inset 0 -1px #00000073,
+                    0 0 0 1px #ffffff09,
+                    0 12px 24px -14px #000000f2;
+            }
+
+            &:hover {
+                color: var(--ink-primary);
+                background: #ffffff0d;
+            }
+        }
+    }
+
+    .sidebar-footer {
+        margin-top: auto;
+        border-top: 1px solid var(--hairline);
+        padding-top: 8px;
+        position: relative;
+
+        .account-button {
+            width: 100%;
+            color: var(--ink-primary);
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s var(--ease);
+            background: 0 0;
+            border: 0;
+            border-radius: 16px;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 8px;
+            display: flex;
+            align-items: center;
+
+            &:hover {
+                background-color: var(--surface-1);
+            }
+
+            .account-content {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex: 1;
+
+                .account-content__avatar {
+                    background: var(--surface-1);
+                    color: var(--ink-primary);
+                    border: 2px solid #ffffff24;
+                    border-radius: 50%;
+                    flex: none;
+                    justify-content: center;
+                    align-items: center;
+                    font-weight: 500;
+                    display: inline-flex;
+                    overflow: hidden;
+                    width: 36px;
+                    height: 36px;
+                }
+
+                .account-data {
+                    flex-direction: column;
+                    flex: 1;
+                    min-width: 0;
+                    display: flex;
+
+                    .account-name {
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
+                        font-size: 14px;
+                        font-weight: 600;
+                        overflow: hidden;
+                    }
+
+                    .account-email {
+                        color: var(--ink-secondary);
+                        white-space: nowrap;
+                        text-overflow: ellipsis;
+                        font-size: 12px;
+                        overflow: hidden;
+                    }
+                }
+            }
+        }
+    }
+}

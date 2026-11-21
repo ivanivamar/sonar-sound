@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { LibraryService } from '../../core/library/library.service';
 import { RouterLink } from '@angular/router';
 import { AlbumFile, TrackFile, TrackRow } from '../../core/library/library-file.model';

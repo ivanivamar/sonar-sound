@@ -8,9 +8,9 @@ import {
     signal,
     untracked,
 } from '@angular/core';
+import { DriveStreamService } from '../drive/drive-stream.service';
 import { TrackRow } from '../library/library-file.model';
-import { DriveService } from '../drive/drive.service';
-import { firstValueFrom, Subject, takeUntil } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { atmosphere } from '../../layout/atmosphere/atmosphere.service';
 import { CoverColorService } from '../cover/cover-color.service';
 import { LibraryService } from '../library/library.service';
@@ -20,12 +20,14 @@ import { AuthService } from '../auth/auth.service';
 
 @Service()
 export class PlayerService {
+    // Services injected via Angular's dependency injection system.
     private readonly injector = inject(Injector);
     private readonly authService = inject(AuthService);
-    private readonly driveService = inject(DriveService);
     private readonly coverColorService = inject(CoverColorService);
     private readonly libraryService = inject(LibraryService);
+    private readonly driveStreamService = inject(DriveStreamService);
 
+    // Signals and state variables for the player.
     private readonly _currentTrack = signal<TrackRow | null>(null);
     private readonly _isPlaying = signal(false);
     private readonly _position = signal(0);
@@ -33,9 +35,10 @@ export class PlayerService {
     private readonly _error = signal<string | null>(null);
     private readonly _cover = signal<string | null>(null);
     private readonly _coverColor = signal<CoverColor | null>(null);
-    private readonly downloading = signal(false);
+    private readonly loading = signal(false);
     private readonly stalled = signal(false);
 
+    // Readonly versions of the signals exposed to consumers of the service.
     readonly currentTrack = this._currentTrack.asReadonly();
     readonly isPlaying = this._isPlaying.asReadonly();
     readonly position = this._position.asReadonly();
@@ -43,11 +46,11 @@ export class PlayerService {
     readonly error = this._error.asReadonly();
     readonly cover = this._cover.asReadonly();
     readonly coverColor = this._coverColor.asReadonly();
-    /** True while the track downloads and whenever playback is waiting for data. */
-    readonly isBuffering = computed(() => this.downloading() || this.stalled());
+    /** True while the track loads and whenever playback is waiting for data. */
+    readonly isBuffering = computed(() => this.loading() || this.stalled());
 
+    // HTMLAudioElement used for playback and related state.
     private readonly audio = new Audio();
-    private readonly cancelDownload = new Subject<void>();
     private audioUrl: string | null = null;
     private sourceReady = false;
     private loadVersion = 0;
@@ -82,6 +85,10 @@ export class PlayerService {
             this._error.set(this.audio.error?.message || 'Could not play this audio file.');
         });
 
+        void this.driveStreamService.register().catch((error: unknown) => {
+            console.error('Could not register the Drive streaming worker:', error);
+        });
+
         effect(() => {
             if (!this.authService.isSignedIn()) {
                 untracked(() => {
@@ -103,19 +110,17 @@ export class PlayerService {
         this._coverColor.set(null);
         this._cover.set(null);
         this._isPlaying.set(false);
-        this.downloading.set(true);
+        this.loading.set(true);
 
         void this.loadCover(track, version);
 
         try {
-            const blob = await firstValueFrom(
-                this.driveService.downloadBlob(track.flac.id).pipe(takeUntil(this.cancelDownload)),
-            );
+            await this.driveStreamService.register();
 
-            // Another track was selected, or the session ended, while this one was downloading.
+            // Another track was selected, or the session ended, while this one was loading.
             if (version !== this.loadVersion) return;
 
-            this.audioUrl = URL.createObjectURL(blob);
+            this.audioUrl = this.driveStreamService.createStreamUrl(track.flac);
             this.audio.src = this.audioUrl;
             this.sourceReady = true;
 
@@ -125,11 +130,11 @@ export class PlayerService {
 
             this.sourceReady = false;
             this._error.set(
-                error instanceof Error ? error.message : 'Could not download the track.',
+                error instanceof Error ? error.message : 'Could not load the track.',
             );
         } finally {
             if (version === this.loadVersion) {
-                this.downloading.set(false);
+                this.loading.set(false);
             }
         }
     }
@@ -152,10 +157,10 @@ export class PlayerService {
         this.audio.pause();
     }
 
-    /** Pauses or resumes the current track, retrying its download if it never loaded. */
+    /** Pauses or resumes the current track, retrying its load if it never loaded. */
     toggle(): void {
         const track = this._currentTrack();
-        if (!track || this.downloading()) return;
+        if (!track || this.loading()) return;
 
         if (!this.sourceReady) {
             void this.playTrack(track);
@@ -170,7 +175,7 @@ export class PlayerService {
         this.audio.currentTime = seconds;
     }
 
-    /** Stops playback, cancels any pending download and clears all track state. */
+    /** Stops playback, cancels any pending load and clears all track state. */
     private reset(): void {
         this.releaseAudio();
         this._currentTrack.set(null);
@@ -180,24 +185,20 @@ export class PlayerService {
         this._coverColor.set(null);
         this._cover.set(null);
         this._isPlaying.set(false);
-        this.downloading.set(false);
+        this.loading.set(false);
     }
 
-    /** Invalidates pending work and releases the audio source and its blob URL. */
+    /** Releases the audio source and cancels any pending load. */
     private releaseAudio(): void {
         this.loadVersion++;
-        this.cancelDownload.next();
         this.sourceReady = false;
         this.stalled.set(false);
 
         this.audio.pause();
+        this.audioUrl = null;
         this.audio.removeAttribute('src');
         this.audio.load();
 
-        if (this.audioUrl) {
-            URL.revokeObjectURL(this.audioUrl);
-            this.audioUrl = null;
-        }
     }
 
     private async loadCover(track: TrackRow, version: number): Promise<void> {

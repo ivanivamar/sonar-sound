@@ -48,7 +48,7 @@
     border: none;
 
     i {
-        font-size: 16px;
+        font-size: 24px;
         line-height: 1;
         display: flex;
         justify-content: center;
@@ -58,13 +58,17 @@
     &.btn-sm {
         height: 26px;
         width: 26px;
+
+        i {
+            font-size: 16px;
+        }
     }
 
     &.btn-circle {
         border-radius: 50%;
     }
 
-    &.button-filled {
+    &.btn-filled {
         background-color: var(--ink-primary);
         color: var(--bg-1);
         box-shadow: 0 0 30px -10px #ffffff73;
@@ -80,9 +84,10 @@
         background: none;
         color: inherit;
         box-shadow: none;
+        transition: background 0.2s var(--ease);
 
         &:hover {
-            background: rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.08);
         }
     }
 }

@@ -1,0 +1,78 @@
+:host {
+    display: block;
+    width: 100%;
+}
+
+.slider {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 16px;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    outline: none;
+
+    &[aria-disabled='true'] {
+        cursor: default;
+    }
+
+    &:focus-visible .slider-thumb {
+        box-shadow: 0 0 0 3px #ffffff59;
+    }
+}
+
+.slider-rail {
+    position: relative;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--hairline-strong);
+    transition: height 0.12s ease;
+}
+
+.slider-played {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--ink-primary);
+}
+
+.slider-thumb {
+    position: absolute;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--ink-primary);
+    transform: translate(-50%, -50%) scale(0);
+    transition: transform 0.12s ease;
+    box-shadow: 0 0 0 3px #ffffff59;
+    pointer-events: none;
+}
+
+.slider:hover:not([aria-disabled='true']) .slider-rail,
+:host(.dragging) .slider-rail {
+    height: 6px;
+}
+
+.slider:hover:not([aria-disabled='true']) .slider-thumb,
+.slider:focus-visible .slider-thumb,
+:host(.dragging) .slider-thumb {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.slider-tooltip {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--menu-surface);
+    box-shadow: var(--menu-edge), var(--menu-shadow);
+    color: var(--ink-primary);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    pointer-events: none;
+}

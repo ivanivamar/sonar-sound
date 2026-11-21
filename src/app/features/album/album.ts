@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { LibraryService } from '../../core/library/library.service';
 import { RouterLink } from '@angular/router';
-import { AlbumFile, TrackFile } from '../../core/library/library-file.model';
+import { AlbumFile, TrackFile, TrackRow } from '../../core/library/library-file.model';
 import { TrackCard } from '../../shared/media/track-card/track-card';
 import { Cover } from '../../shared/media/cover/cover';
 import { rxResource } from '@angular/core/rxjs-interop';
@@ -37,20 +37,26 @@ export class Album {
         const artistId = this.album()?.artistId;
         return artistId ? this.libraryService.getArtistById(artistId) : undefined;
     });
-    readonly tracks = computed<TrackFile[]>(() => this.libraryService.getAlbumTracks(this.id()));
 
-    private readonly coverColor = rxResource({
-        params: () => this.album()?.cover ?? undefined,
-        stream: ({ params }) => this.coverColorService.getColor(params),
-    });
     protected readonly coverResource = rxResource({
         params: () => this.album()?.cover ?? undefined,
         stream: ({ params }) => this.coverService.getUrl(params),
+    });
+    private readonly coverColor = rxResource({
+        params: () => this.album()?.cover ?? undefined,
+        stream: ({ params }) => this.coverColorService.getColor(params),
     });
 
     protected readonly artistCoverResource = rxResource({
         params: () => this.artist()?.image?.id ?? undefined,
         stream: ({ params }) => this.coverService.getUrl(params),
+    });
+    readonly tracks = computed<TrackRow[]>(() => {
+        const albumTracks: TrackRow[] = this.libraryService.getAlbumTracks(this.id());
+        return albumTracks.map(track => ({
+            ...track,
+            albumTitle: this.album()?.title ?? '',
+        }));
     });
 
     constructor() {

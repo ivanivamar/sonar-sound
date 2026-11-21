@@ -1,1 +1,74 @@
-<footer class="player">player</footer>
+<footer class="player">
+    <div class="player-slider-wrapper">
+        <app-slider
+            [value]="position()"
+            [max]="duration()"
+            (valueChange)="seek($event)"
+        ></app-slider>
+    </div>
+
+    <div class="player-track">
+        @if (!currentTrack()) {
+            <span class="track-title"> No track playing </span>
+        } @else {
+            <div
+                class="track-cover"
+                [style.--glow-color]="
+                    coverColor()
+                        ? 'oklch(65% ' +
+                          coverColor()!.chroma * 0.18 +
+                          ' ' +
+                          coverColor()?.hue +
+                          ' / 0.65)'
+                        : 'transparent'
+                "
+            >
+                <app-cover [cover]="cover()"></app-cover>
+            </div>
+
+            <div class="track-data">
+                <span class="track-title">
+                    {{ currentTrack()?.title }}
+                </span>
+                <div class="track-artist-album">
+                    <span class="track-artist">
+                        {{ currentTrack()?.artist }}
+                    </span>
+                    ·
+                    <a
+                        [routerLink]="['/library/album/', currentTrack()?.albumId]"
+                        class="track-album"
+                    >
+                        {{ currentTrack()?.albumTitle }}
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="player-controls">
+        <button class="button-icon btn-text" appRipple>
+            <i class="material-symbols-rounded">shuffle</i>
+        </button>
+        <button class="button-icon btn-text" appRipple>
+            <i class="material-symbols-rounded">skip_previous</i>
+        </button>
+        <button class="button-icon btn-filled btn-circle" appRipple (click)="toggleTrack()">
+            <i class="material-symbols-rounded">
+                {{ isPlaying() ? 'pause' : 'play_arrow' }}
+            </i>
+        </button>
+        <button class="button-icon btn-text" appRipple>
+            <i class="material-symbols-rounded">skip_next</i>
+        </button>
+        <button class="button-icon btn-text" appRipple>
+            <i class="material-symbols-rounded">repeat</i>
+        </button>
+    </div>
+
+    <div class="player-actions">
+        <span class="track-duration">
+            {{ position() | duration }} / {{ duration() | duration }}
+        </span>
+    </div>
+</footer>

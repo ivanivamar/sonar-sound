@@ -1,0 +1,29 @@
+<div
+    class="slider"
+    role="slider"
+    tabindex="0"
+    [attr.aria-label]="label()"
+    aria-orientation="horizontal"
+    [attr.aria-valuemin]="0"
+    [attr.aria-valuemax]="max()"
+    [attr.aria-valuenow]="value()"
+    [attr.aria-valuetext]="(value() | duration) + ' of ' + (max() | duration)"
+    [attr.aria-disabled]="disabled()"
+    (pointerenter)="onPointerEnter($event)"
+    (pointerleave)="onPointerLeave()"
+    (pointermove)="onPointerMove($event)"
+    (pointerdown)="onPointerDown($event)"
+    (pointerup)="onPointerUp($event)"
+    (pointercancel)="onPointerCancel()"
+    (keydown)="onKeydown($event)"
+>
+    <div class="slider-rail">
+        <div class="slider-played" [style.width.%]="percent()"></div>
+    </div>
+    <div class="slider-thumb" [style.left.%]="percent()"></div>
+    @if (showTooltip()) {
+        <div class="slider-tooltip" aria-hidden="true" [style.left.%]="hoverPercent()">
+            {{ hoverTime() | duration }}
+        </div>
+    }
+</div>

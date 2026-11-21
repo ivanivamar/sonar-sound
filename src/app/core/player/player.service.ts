@@ -1,5 +1,5 @@
-import { inject, Service, signal } from '@angular/core';
-import { TrackFile, TrackRow } from '../library/library-file.model';
+import { inject, Injector, runInInjectionContext, Service, signal } from '@angular/core';
+import { TrackRow } from '../library/library-file.model';
 import { DriveService } from '../drive/drive.service';
 import { firstValueFrom } from 'rxjs';
 import { atmosphere } from '../../layout/atmosphere/atmosphere.service';
@@ -9,36 +9,33 @@ import { CoverColor } from '../cover/cover-color';
 
 @Service()
 export class PlayerService {
+    private readonly injector = inject(Injector);
     private readonly driveService = inject(DriveService);
     private readonly coverColorService = inject(CoverColorService);
     private readonly libraryService = inject(LibraryService);
 
-    readonly currentTrack = signal<TrackFile | null>(null);
+    readonly currentTrack = signal<TrackRow | null>(null);
     readonly isPlaying = signal(false);
     readonly position = signal(0);
     readonly duration = signal(0);
     readonly isBuffering = signal(false);
     readonly error = signal<string | null>(null);
+    readonly cover = signal<string | null>(null);
     readonly coverColor = signal<CoverColor | null>(null);
 
     private readonly audio = new Audio();
     private audioUrl: string | null = null;
     private loadVersion = 0;
+    private atmosphereInitialized = false;
 
     constructor() {
         this.audio.addEventListener('playing', () => this.isPlaying.set(true));
         this.audio.addEventListener('pause', () => this.isPlaying.set(false));
         this.audio.addEventListener('ended', () => this.isPlaying.set(false));
-
-
-        atmosphere(() => {
-            const color = this.coverColor();
-            return {
-                x: '15%',
-                y: '35%',
-                hue: color ? String(color.hue) : null,
-                chroma: color ? String(color.chroma) : null,
-            };
+        this.audio.addEventListener('timeupdate', () => this.position.set(this.audio.currentTime));
+        this.audio.addEventListener('durationchange', () => {
+            const duration = this.audio.duration;
+            this.duration.set(Number.isFinite(duration) ? duration : 0);
         });
     }
 
@@ -55,10 +52,12 @@ export class PlayerService {
         }
 
         this.currentTrack.set(track);
+        this.initializeAtmosphere();
         this.position.set(0);
         this.duration.set(0);
         this.error.set(null);
         this.coverColor.set(null);
+        this.cover.set(null);
         this.isBuffering.set(true);
 
         void this.loadCoverColor(track, version);
@@ -120,9 +119,28 @@ export class PlayerService {
             if (!coverId) return;
 
             const color = await firstValueFrom(this.coverColorService.getColor(coverId));
-            if (version === this.loadVersion) this.coverColor.set(color);
+            if (version === this.loadVersion) {
+                this.coverColor.set(color);
+                this.cover.set(coverId);
+            }
         } catch {
             // Artwork is optional; playback should continue without a colour.
         }
+    }
+
+    private initializeAtmosphere(): void {
+        if (this.atmosphereInitialized) return;
+        this.atmosphereInitialized = true;
+
+        // playTrack() runs from event handlers, so atmosphere()'s inject() needs an explicit context.
+        runInInjectionContext(this.injector, () =>
+            atmosphere(() => {
+                const color = this.coverColor();
+                return {
+                    hue: color ? String(color.hue) : null,
+                    chroma: color ? String(color.chroma) : null,
+                };
+            }),
+        );
     }
 }

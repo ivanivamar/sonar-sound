@@ -1,7 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { Location } from '@angular/common';
 import { LibraryService } from '../../core/library/library.service';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AlbumFile, TrackFile } from '../../core/library/library-file.model';
 import { TrackCard } from '../../shared/media/track-card/track-card';
 import { Cover } from '../../shared/media/cover/cover';
@@ -24,8 +23,6 @@ export interface DiscGroup {
 })
 export class Album {
     private readonly libraryService = inject(LibraryService);
-    private readonly router = inject(Router);
-    private readonly location = inject(Location);
     private readonly coverColorService = inject(CoverColorService);
     private readonly coverService = inject(CoverService);
 

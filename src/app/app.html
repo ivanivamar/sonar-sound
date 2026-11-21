@@ -3,9 +3,12 @@
         <app-sidebar></app-sidebar>
         <section class="shell-panel">
             <app-atmosphere></app-atmosphere>
-            <div class="app-content" cdkVirtualScrollingElement>
+            <div class="app-content">
                 <app-topbar></app-topbar>
-                <router-outlet />
+                <div class="page-content" cdkVirtualScrollingElement>
+                    <router-outlet />
+                </div>
+                <app-player></app-player>
             </div>
         </section>
     } @else {

@@ -1,14 +1,36 @@
-<div class="track-card">
-    <div class="lead">
-        <ng-content select="[lead]">
-            <app-cover [cover]="track()?.cover"></app-cover>
-        </ng-content>
+<div class="track-card" appRipple [class.current-playing]="isCurrentPlaying()">
+    <div class="lead-wrapper">
+        <div class="track-number">
+            {{ track()?.track }}
+        </div>
+
+        <button
+            class="play-button button-icon btn-text btn-circle"
+            appRipple
+            [disabled]="playerService.isBuffering()"
+            (click)="play($event)"
+        >
+            <i class="material-symbols-rounded">
+                @if (playerService.isBuffering() && playerService.currentTrack() === track()) {
+                    <span class="loading material-symbols-rounded">autorenew</span>
+                } @else {
+                    {{
+                        playerService.currentTrack() === track() && playerService.isPlaying()
+                            ? 'pause'
+                            : 'play_arrow'
+                    }}
+                }
+            </i>
+        </button>
     </div>
     <div class="track-info">
-        <span class="track-title">{{ track()?.title }}</span>
-        <a [routerLink]="['/library/artist/', track()?.artistId]" class="track-artist">{{
-            track()?.artist
-        }}</a>
+        <ng-content select="[cover]"> </ng-content>
+        <div class="track-text">
+            <span class="track-title">{{ track()?.title }}</span>
+            <a [routerLink]="['/library/artist/', track()?.artistId]" class="track-artist">{{
+                track()?.artist
+            }}</a>
+        </div>
     </div>
     <a [routerLink]="['/library/album/', track()?.albumId]" class="track-album">{{
         track()?.albumTitle

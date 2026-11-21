@@ -43,9 +43,7 @@
                 </div>
                 <div class="track-list">
                     @for (track of tracks(); track track.id) {
-                        <app-track-card [track]="track">
-                            <span lead>{{ track.track ?? '-' }}</span>
-                        </app-track-card>
+                        <app-track-card [track]="track"> </app-track-card>
                     }
                 </div>
             </div>

@@ -4,9 +4,10 @@ import { TrackCard } from '../../../shared/media/track-card/track-card';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { TabItem, Tabs } from '../../../shared/ui/tabs/tabs';
 import { Search } from '../../../shared/ui/search/search';
+import { Cover } from '../../../shared/media/cover/cover';
 
 @Component({
-    imports: [TrackCard, ScrollingModule, Tabs, Search],
+    imports: [TrackCard, ScrollingModule, Tabs, Search, Cover],
     selector: 'app-tracks',
     styleUrl: './tracks.scss',
     templateUrl: './tracks.html',

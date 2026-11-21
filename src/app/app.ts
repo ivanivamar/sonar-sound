@@ -1,19 +1,26 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth/auth.service';
-import { Sidebar } from './shared/components/sidebar/sidebar';
+import { Sidebar } from './layout/sidebar/sidebar';
 import { Atmosphere } from './layout/atmosphere/atmosphere';
-import { Topbar } from './shared/components/topbar/topbar';
+import { AtmosphereService } from './layout/atmosphere/atmosphere.service';
+import { Topbar } from './layout/topbar/topbar';
 import { CdkVirtualScrollableElement } from '@angular/cdk/scrolling';
+import { Player } from './shared/media/player/player';
 
 @Component({
     selector: 'app-root',
-    imports: [RouterOutlet, Sidebar, Atmosphere, Topbar, CdkVirtualScrollableElement],
+    imports: [RouterOutlet, Sidebar, Atmosphere, Topbar, CdkVirtualScrollableElement, Player],
     templateUrl: './app.html',
     styleUrl: './app.scss',
+    host: {
+        '[style.--atmosphere-accent-hue]': 'atmosphereState().hue',
+        '[style.--atmosphere-accent-chroma]': 'atmosphereState().chroma',
+    },
 })
 export class App {
     protected readonly title = signal('sonar-sound');
+    protected readonly atmosphereState = inject(AtmosphereService).state;
 
     private readonly authService = inject(AuthService);
     private readonly router = inject(Router);

@@ -14,7 +14,7 @@ The ripple starts at the pointer position, uses the element's text color by defa
 
 ## Topbar content
 
-Import `TopbarLeft` from `src/app/shared/components/topbar/topbar-left` in a component's `imports` and mark an `ng-template` with `appTopbarLeft`:
+Import `TopbarLeft` from `src/app/layout/topbar/topbar-left` in a component's `imports` and mark an `ng-template` with `appTopbarLeft`:
 
 ```html
 <ng-template appTopbarLeft>

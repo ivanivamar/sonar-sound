@@ -1,6 +1,6 @@
 <nav class="crumbs">
-    <button class="crumbs-back" (click)="goBack()">
-        <i class="material-symbols-rounded">keyboard_arrow_left</i>
+    <button class="crumbs-back" aria-label="Go back" (click)="goBack()">
+        <i class="material-symbols-rounded" aria-hidden="true">keyboard_arrow_left</i>
     </button>
     @for (crumb of crumbs(); track $index; let index = $index) {
         <a class="crumb" [routerLink]="crumb.url">{{ crumb.label }}</a>

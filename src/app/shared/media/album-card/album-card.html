@@ -1,18 +1,11 @@
 <div class="album-card" (click)="goToAlbum()" (keypress)="goToAlbum()" tabindex="0">
-    <div
-        class="cover-wrapper"
-        [style.--glow-color]="
-            coverColor.hasValue()
-                ? 'oklch(65% ' +
-                  coverColor.value().chroma * 0.18 +
-                  ' ' +
-                  coverColor.value().hue +
-                  ' / 0.65)'
-                : 'transparent'
-        "
-    >
+    <div class="cover-wrapper" [style.--glow-color]="glow()">
         @defer (on viewport) {
-            <app-cover [cover]="album().cover"></app-cover>
+            <app-cover
+                [cover]="album().cover"
+                [extractColor]="needsExtraction()"
+                (colorResolved)="extractedColor.set($event)"
+            ></app-cover>
         } @placeholder {
             <app-cover-placeholder></app-cover-placeholder>
         }

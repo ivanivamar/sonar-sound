@@ -7,10 +7,18 @@
         </div>
     </a>
 
-    <nav class="sidebar-nav">
-        @for (item of navItems; track $index) {
-            <a [routerLink]="item.href" routerLinkActive="active" appRipple class="nav-item">
-                <i class="material-symbols-rounded nav-item__icon">{{ item.icon }}</i>
+    <nav class="sidebar-nav" aria-label="Main navigation">
+        @for (item of navItems(); track item.label) {
+            <a
+                [routerLink]="item.href"
+                routerLinkActive="active"
+                ariaCurrentWhenActive="page"
+                appRipple
+                class="nav-item"
+            >
+                <i class="material-symbols-rounded nav-item__icon" aria-hidden="true">{{
+                    item.icon
+                }}</i>
                 <span class="nav-item__label">{{ item.label }}</span>
             </a>
         }
@@ -24,6 +32,7 @@
                 (click)="toggleAccountPopup()"
                 [attr.aria-expanded]="isAccountPopupVisible()"
                 aria-haspopup="true"
+                aria-label="Account menu"
             >
                 @if (userService.userInfo.value(); as user) {
                     <div class="account-content">
@@ -38,7 +47,9 @@
                         </div>
                     </div>
                 }
-                <i class="material-symbols-rounded">unfold_more</i>
+                <i class="material-symbols-rounded account-chevron" aria-hidden="true"
+                    >unfold_more</i
+                >
             </button>
             <app-account-popup
                 [isVisible]="isAccountPopupVisible()"

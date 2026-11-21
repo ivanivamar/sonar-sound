@@ -6,14 +6,16 @@ import { App } from '../../app';
 import { AuthService } from '../../core/auth/auth.service';
 import { CoverColorService } from '../../core/cover/cover-color.service';
 import { CoverService } from '../../core/cover/cover.service';
-import { AlbumFile, ArtistFile } from '../../core/library/library-file.model';
+import { AlbumFile, ArtistFile, TrackRow } from '../../core/library/library-file.model';
 import { LibraryService } from '../../core/library/library.service';
+import { PlayerService } from '../../core/player/player.service';
 import { Album } from './album';
 
 describe('Album', () => {
     let fixture: ComponentFixture<Album>;
     const albums = signal<Record<string, AlbumFile>>({});
     const artists = signal<Record<string, ArtistFile>>({});
+    const tracks = signal<TrackRow[]>([]);
     const getUrl = vi.fn((id: string) => of(`blob:${id}`));
     const getColor = vi.fn((id: string) =>
         of(id === 'cover-1' ? { hue: 120, chroma: 0.8 } : { hue: 240, chroma: 0.4 }),
@@ -22,6 +24,7 @@ describe('Album', () => {
     beforeEach(async () => {
         albums.set({});
         artists.set({});
+        tracks.set([]);
         getUrl.mockClear();
         getColor.mockClear();
 
@@ -35,12 +38,22 @@ describe('Album', () => {
                     useValue: {
                         isLoading: signal(false),
                         getAlbumById: (id: string) => albums()[id],
-                        getAlbumTracks: () => [],
+                        getAlbumTracks: () => tracks(),
                         getArtistById: (id: string) => artists()[id],
                     },
                 },
                 { provide: CoverService, useValue: { getUrl } },
                 { provide: CoverColorService, useValue: { getColor } },
+                {
+                    provide: PlayerService,
+                    useValue: {
+                        currentTrack: signal(null),
+                        isPlaying: signal(false),
+                        isBuffering: signal(false),
+                        playTrack: vi.fn(),
+                        toggle: vi.fn(),
+                    },
+                },
             ],
         }).overrideComponent(App, { set: { template: '<app-atmosphere />' } }).compileComponents();
 
@@ -76,6 +89,20 @@ describe('Album', () => {
         expect(fixture.nativeElement.querySelector('.album-artist img').getAttribute('src')).toBe('blob:image-2');
     });
 
+    it('does not sample the cover when the library provides its colour', async () => {
+        albums.set({
+            'album-1': {
+                id: 'album-1', title: 'Album', artistId: 'missing', artist: 'Artist Name',
+                cover: 'cover-1', coverColor: { hue: 300, chroma: 0.6 }, trackCount: 0, addedAt: '',
+            },
+        });
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(getColor).not.toHaveBeenCalled();
+    });
+
     it('does not request an artist cover when the artist is unavailable', async () => {
         albums.set({
             'album-1': {
@@ -87,6 +114,42 @@ describe('Album', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(getUrl).not.toHaveBeenCalled();
+    });
+
+    it('shows the total duration only when every album track has a valid duration', async () => {
+        albums.set({
+            'album-1': {
+                id: 'album-1', title: 'Album', artistId: 'missing', artist: 'Artist Name',
+                trackCount: 2, addedAt: '',
+            },
+        });
+        const track: TrackRow = {
+            id: 'track-1', title: 'Track', artist: 'Artist Name', artistId: 'missing',
+            albumId: 'album-1', track: 1, disc: 1, duration: 125, syncedLyrics: false,
+            flac: { id: 'flac-1', size: 0 }, mobile: { id: 'mobile-1', size: 0, codec: '', bitrate: '' },
+            addedAt: '',
+        };
+        tracks.set([track, { ...track, id: 'track-2', duration: 65 }]);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(fixture.componentInstance.totalDuration()).toBe(190);
+        expect(fixture.nativeElement.querySelector('.album-duration').textContent).toContain('3:10');
+        expect(fixture.nativeElement.querySelector('app-track-card button').getAttribute('aria-label'))
+            .toBe('Play Track');
+        expect(fixture.nativeElement.querySelector('.track-card').hasAttribute('aria-hidden')).toBe(false);
+        expect(fixture.nativeElement.querySelector('.track-card .track-artist')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.track-card .track-album')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.track-card .track-duration').textContent).toBe('2:05');
+
+        tracks.set([track, { ...track, id: 'track-2', duration: undefined }]);
+        await fixture.whenStable();
+        expect(fixture.componentInstance.totalDuration()).toBeNull();
+        expect(fixture.nativeElement.querySelector('.album-duration').textContent.trim()).toBe('');
+
+        tracks.set([track]);
+        await fixture.whenStable();
+        expect(fixture.componentInstance.totalDuration()).toBeNull();
     });
 
     it('applies the album cover color to the shell atmosphere and clears it on leaving', async () => {

@@ -25,11 +25,7 @@ export class Player {
     readonly cover = computed(() => this.playerService.cover());
 
     toggleTrack() {
-        if (this.isBuffering()) return;
-
-        if (this.currentTrack()) {
-            this.playerService.toggle();
-        }
+        this.playerService.toggle();
     }
 
     seek(position: number) {

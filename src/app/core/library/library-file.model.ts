@@ -1,3 +1,5 @@
+import { CoverColor } from '../cover/cover-color';
+
 export interface LibraryFile {
     version: number;
     updatedAt: string;
@@ -21,6 +23,8 @@ export interface Image {
     id: string;
     v: number;
     source: string;
+    /** Dominant colour precomputed at import time; the app samples the image when it is missing. */
+    color?: CoverColor | null;
 }
 
 export interface AlbumFile {
@@ -32,6 +36,8 @@ export interface AlbumFile {
     date?: string;
     genre?: string;
     cover?: string | null;
+    /** Dominant colour of `cover`, precomputed at import time. */
+    coverColor?: CoverColor | null;
     trackCount: number;
     addedAt: string;
 }

@@ -1,6 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { App } from '../../app';
+import { AuthService } from '../../core/auth/auth.service';
+import { Atmosphere } from '../atmosphere/atmosphere';
+import { Sidebar } from '../sidebar/sidebar';
+import { Player } from '../../shared/media/player/player';
 import { Topbar } from './topbar';
 import { TopbarLeft } from './topbar-left';
 
@@ -41,6 +46,34 @@ class TestPage {
 class PageHost {
     readonly showPage = signal(true);
 }
+
+@Component({
+    imports: [Topbar, TopbarLeft],
+    template: `
+        <app-topbar [scrolled]="scrolled()" />
+        <ng-template appTopbarLeft><span>Default</span></ng-template>
+        @if (showScrolled()) {
+            <ng-template appTopbarLeft topbarWhen="scrolled">
+                <button type="button" (click)="clicks = clicks + 1">{{ label() }}</button>
+            </ng-template>
+        }
+    `,
+})
+class ScrolledHost {
+    readonly scrolled = signal(false);
+    readonly showScrolled = signal(true);
+    readonly label = signal('Artist');
+    clicks = 0;
+}
+
+@Component({ selector: 'app-sidebar', template: '' })
+class StubSidebar {}
+
+@Component({ selector: 'app-atmosphere', template: '' })
+class StubAtmosphere {}
+
+@Component({ selector: 'app-player', template: '' })
+class StubPlayer {}
 
 describe('Topbar', () => {
     let component: Topbar;
@@ -131,5 +164,67 @@ describe('Topbar left content', () => {
         fixture.componentInstance.showSecond.set(false);
         await fixture.whenStable();
         expect(topbar.querySelector('.topbar-left')).toBeNull();
+    });
+
+    it('shows scroll-specific content only while scrolled and restores the default', async () => {
+        const fixture = TestBed.createComponent(ScrolledHost);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const topbar = fixture.nativeElement.querySelector('header') as HTMLElement;
+
+        expect(topbar.classList.contains('scrolled')).toBe(false);
+        expect(topbar.querySelector('.topbar-left')?.textContent).toContain('Default');
+
+        fixture.componentInstance.scrolled.set(true);
+        await fixture.whenStable();
+        expect(topbar.classList.contains('scrolled')).toBe(true);
+        const button = topbar.querySelector('.topbar-left button') as HTMLButtonElement;
+        expect(button.textContent).toBe('Artist');
+        button.click();
+        expect(fixture.componentInstance.clicks).toBe(1);
+        fixture.componentInstance.label.set('Updated artist');
+        await fixture.whenStable();
+        expect(button.textContent).toBe('Updated artist');
+
+        fixture.componentInstance.scrolled.set(false);
+        await fixture.whenStable();
+        expect(topbar.querySelector('.topbar-left')?.textContent).toContain('Default');
+        expect(topbar.classList.contains('scrolled')).toBe(false);
+
+        fixture.componentInstance.scrolled.set(true);
+        fixture.componentInstance.showScrolled.set(false);
+        await fixture.whenStable();
+        expect(topbar.querySelector('.topbar-left')?.textContent).toContain('Default');
+    });
+});
+
+describe('App topbar scroll state', () => {
+    it('tracks the page scroll position and synchronizes it on route activation', async () => {
+        TestBed.configureTestingModule({
+            imports: [App],
+            providers: [
+                provideRouter([{ path: 'test', component: TestPage }]),
+                { provide: AuthService, useValue: { isSignedIn: signal(true) } },
+            ],
+        }).overrideComponent(App, {
+            remove: { imports: [Sidebar, Atmosphere, Player] },
+            add: { imports: [StubSidebar, StubAtmosphere, StubPlayer] },
+        });
+
+        const fixture = TestBed.createComponent(App);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const page = fixture.nativeElement.querySelector('.page-content') as HTMLElement;
+        const topbar = fixture.nativeElement.querySelector('app-topbar header') as HTMLElement;
+
+        page.scrollTop = 20;
+        page.dispatchEvent(new Event('scroll'));
+        await fixture.whenStable();
+        expect(topbar.classList.contains('scrolled')).toBe(true);
+
+        page.scrollTop = 0;
+        await TestBed.inject(Router).navigateByUrl('/test');
+        await fixture.whenStable();
+        expect(topbar.classList.contains('scrolled')).toBe(false);
     });
 });

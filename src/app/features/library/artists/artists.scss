@@ -1,7 +1,7 @@
 .artists-grid {
     display: grid;
-    --artists-grid-size: 160px;
+    --artists-grid-size: 170px;
     grid-template-columns: repeat(auto-fill, var(--artists-grid-size));
     gap: 28px 20px;
-    margin-top: var(--space-3);
+    margin-top: var(--space-6);
 }

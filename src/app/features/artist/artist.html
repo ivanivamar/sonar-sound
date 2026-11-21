@@ -5,6 +5,16 @@
         @if (!artist()) {
             <span>Artist not found</span>
         } @else {
+            <ng-template appTopbarLeft topbarWhen="scrolled">
+                <div class="artist-topbar">
+                    <app-cover
+                        [cover]="coverId()"
+                        [name]="artist()?.name"
+                        aria-hidden="true"
+                    ></app-cover>
+                    <span>{{ artist()?.name }}</span>
+                </div>
+            </ng-template>
             <header class="artist-header">
                 <div class="artist-bg">
                     <div
@@ -16,9 +26,11 @@
                 </div>
                 <app-crumbs [crumbs]="crumbs()"></app-crumbs>
                 <div class="artist-data">
-                    <app-cover [resolvedUrl]="coverUrl()" [name]="artist()?.name"></app-cover>
+                    <app-cover [cover]="coverId()" [name]="artist()?.name"></app-cover>
                     <div class="artist-text">
-                        <div class="artist-meta">Artist</div>
+                        <div class="artist-meta" [style.--glow-color]="coverColor()?.hue">
+                            Artist
+                        </div>
                         <h1 class="artist-name">{{ artist()?.name }}</h1>
                         <div class="artist-stats">
                             {{ albums().length }} releases · {{ tracks().length }} tracks ·

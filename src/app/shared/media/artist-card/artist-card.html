@@ -1,18 +1,12 @@
 <div class="artist-card" (click)="goToArtist()" (keypress)="goToArtist()" tabindex="0">
-    <div
-        class="cover-wrapper"
-        [style.--glow-color]="
-            coverColor.hasValue()
-                ? 'oklch(65% ' +
-                  coverColor.value().chroma * 0.18 +
-                  ' ' +
-                  coverColor.value().hue +
-                  ' / 0.65)'
-                : 'transparent'
-        "
-    >
+    <div class="cover-wrapper" [style.--glow-color]="glow()">
         @defer (on viewport) {
-            <app-cover [cover]="artist().image?.id" [name]="artist().name"></app-cover>
+            <app-cover
+                [cover]="coverId()"
+                [name]="artist().name"
+                [extractColor]="needsExtraction()"
+                (colorResolved)="extractedColor.set($event)"
+            ></app-cover>
         } @placeholder {
             <div class="cover-placeholder"></div>
         }

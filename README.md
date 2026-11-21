@@ -22,7 +22,17 @@ Import `TopbarLeft` from `src/app/layout/topbar/topbar-left` in a component's `i
 </ng-template>
 ```
 
-The template appears to the left of the search field and retains its declaring component's bindings. It is removed when its view is destroyed. If multiple templates are active, the most recently registered one is shown; the previous one returns when it is removed.
+The template appears to the left of the search field on desktop and below it on phones, and retains its declaring component's bindings. It is removed when its view is destroyed. If multiple templates are active, the most recently registered one is shown; the previous one returns when it is removed.
+
+For content that appears only after the page scrolls, use `topbarWhen="scrolled"`:
+
+```html
+<ng-template appTopbarLeft topbarWhen="scrolled">
+    <span>{{ title() }}</span>
+</ng-template>
+```
+
+Scrolled content temporarily replaces the normal left content, which returns at the top of the page. The topbar darkens and gains a bottom border whenever the page is scrolled.
 
 ## Development server
 

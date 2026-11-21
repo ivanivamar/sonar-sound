@@ -26,5 +26,26 @@
             display: grid;
             column-gap: 14px;
         }
+
+        // On phones there's no room for the album column: keep number, title and time.
+        @media (max-width: 768px) {
+            --track-columns: auto minmax(0, 1fr) auto;
+
+            .filters-wrapper {
+                margin-top: 16px;
+
+                app-search {
+                    display: none;
+                }
+            }
+
+            .tracks-header {
+                display: none;
+            }
+
+            ::ng-deep .track-card .track-album {
+                display: none;
+            }
+        }
     }
 }

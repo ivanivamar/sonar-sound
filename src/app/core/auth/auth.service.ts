@@ -16,6 +16,10 @@ export class AuthService {
     /** Whether the service currently has an access token in memory. */
     readonly isSignedIn = computed(() => this.token() !== null);
 
+    private readonly _signOutCount = signal(0);
+    /** Increments on each explicit sign-out (not on token expiry), so callers can drop persisted user data. */
+    readonly signOutCount = this._signOutCount.asReadonly();
+
     constructor() {
         // restore token from localStorage if token hasn't expired
         const token = localStorage.getItem('auth_token');
@@ -67,6 +71,7 @@ export class AuthService {
             google.accounts.oauth2.revoke(token, () => console.log('Token revoked'));
         }
         this.clearSession();
+        this._signOutCount.update(count => count + 1);
     }
 
     /** Clears the in-memory token, persisted credentials, and scheduled expiry timer. */

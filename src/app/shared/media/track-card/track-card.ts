@@ -15,18 +15,40 @@ export class TrackCard {
     readonly playerService = inject(PlayerService);
 
     track = input.required<TrackRow>();
+    showArtist = input(true);
+    showAlbum = input(true);
 
-    readonly isCurrentPlaying = computed(() => this.playerService.currentTrack() === this.track() && this.playerService.isPlaying());
+    readonly isCurrent = computed(() => this.playerService.currentTrack()?.id === this.track().id);
+    readonly isCurrentPlaying = computed(() => this.isCurrent() && this.playerService.isPlaying());
+    readonly isCurrentBuffering = computed(() => this.isCurrent() && this.playerService.isBuffering());
+    readonly icon = computed(() =>
+        this.isCurrentBuffering() ? 'autorenew' : this.isCurrentPlaying() ? 'pause' : 'play_arrow',
+    );
+    readonly playLabel = computed(
+        () => `${this.isCurrentPlaying() ? 'Pause' : 'Play'} ${this.track().title}`,
+    );
+
+    playFromRow(event: MouseEvent) {
+        if (event.target instanceof Element && event.target.closest('a')) {
+            return;
+        }
+        this.play(event);
+    }
+
+    playFromKeyboard(event: KeyboardEvent) {
+        if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) {
+            return;
+        }
+        event.preventDefault();
+        this.play(event);
+    }
 
     play(event: Event) {
         event.stopPropagation();
 
-        if (this.playerService.isBuffering()) return;
-
-        if (this.playerService.currentTrack()?.id === this.track().id) {
+        if (this.isCurrent()) {
             this.playerService.toggle();
         } else {
-            console.log('Playing track:', this.track());
             void this.playerService.playTrack(this.track());
         }
     }

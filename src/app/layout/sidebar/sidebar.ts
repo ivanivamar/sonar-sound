@@ -1,4 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, computed } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ClickOutside } from '../../shared/directives/click-outside';
 import { Ripple } from '../../shared/directives/ripple';
@@ -14,8 +14,9 @@ import { UserService } from '../../core/user/user.service';
 export class Sidebar {
     private readonly userService = inject(UserService);
     isAccountPopupVisible = signal(false);
+    isPhoneSize = signal(window.innerWidth <= 768);
 
-    navItems: SidebarNavItem[] = [
+    private readonly desktopOnlyNavItems: SidebarNavItem[] = [
         {
             icon: 'home',
             label: 'Home',
@@ -30,8 +31,15 @@ export class Sidebar {
             icon: 'explore',
             label: 'Releases',
             href: '/releases'
-        },
-        {
+        }
+    ];
+
+    readonly navItems = computed<SidebarNavItem[]>(() => {
+        const isPhone = this.isPhoneSize();
+        if (isPhone) {
+            return this.desktopOnlyNavItems;
+        }
+        return [...this.desktopOnlyNavItems, {
             icon: 'local_activity',
             label: 'Concerts',
             href: '/concerts'
@@ -46,7 +54,8 @@ export class Sidebar {
             label: 'Download',
             href: '/download'
         }
-    ];
+        ];
+    });
 
     toggleAccountPopup(): void {
         this.isAccountPopupVisible.update((isVisible) => !isVisible);

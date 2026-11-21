@@ -103,3 +103,20 @@
         opacity: 0.75;
     }
 }
+
+@media (max-width: 768px) {
+    :host {
+        position: fixed;
+        left: 50%;
+        top: 160px;
+        transition: scale var(--atmosphere-move-duration) var(--atmosphere-easing);
+
+        @media (prefers-reduced-motion: reduce) {
+            transition: none;
+        }
+    }
+
+    .atm-glow {
+        translate: -50% -50%;
+    }
+}

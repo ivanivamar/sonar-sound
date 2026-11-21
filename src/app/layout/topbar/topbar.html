@@ -1,5 +1,9 @@
-<header class="topbar">
-    @if (content.left(); as left) {
+<header class="topbar" [class.scrolled]="scrolled()">
+    @if (scrolled() && content.scrolledLeft(); as left) {
+        <div class="topbar-left topbar-left--scrolled">
+            <ng-container [ngTemplateOutlet]="left"></ng-container>
+        </div>
+    } @else if (content.left(); as left) {
         <div class="topbar-left">
             <ng-container [ngTemplateOutlet]="left"></ng-container>
         </div>

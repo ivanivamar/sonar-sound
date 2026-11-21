@@ -1,16 +1,20 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { CoverColorService } from '../../core/cover/cover-color.service';
 import { Router } from '@angular/router';
 import { LibraryService } from '../../core/library/library.service';
 import { AlbumFile, ArtistFile, TrackFile } from '../../core/library/library-file.model';
 import { Cover } from '../../shared/media/cover/cover';
 import { CoverService } from '../../core/cover/cover.service';
+import { artistCoverId } from '../../core/cover/cover-id';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Crumbs } from '../../shared/ui/crumbs/crumbs';
 import { DurationPipe } from '../../shared/pipes/duration-pipe';
 import { AlbumCard } from '../../shared/media/album-card/album-card';
+import { TopbarLeft } from '../../layout/topbar/topbar-left';
+import { glowColor } from '../../core/cover/cover-color';
 
 @Component({
-    imports: [Cover, Crumbs, DurationPipe, AlbumCard],
+    imports: [Cover, Crumbs, DurationPipe, AlbumCard, TopbarLeft],
     selector: 'app-artist',
     styleUrl: './artist.scss',
     templateUrl: './artist.html',
@@ -18,6 +22,7 @@ import { AlbumCard } from '../../shared/media/album-card/album-card';
 export class Artist {
     private readonly libraryService = inject(LibraryService);
     private readonly coverService = inject(CoverService);
+    private readonly coverColorService = inject(CoverColorService);
     private readonly router = inject(Router);
 
     readonly id = input.required<string>();
@@ -45,10 +50,18 @@ export class Artist {
     readonly tracks = computed<TrackFile[]>(() => this.libraryService.getArtistTracks(this.id()));
     readonly totalDuration = computed(() => this.tracks().reduce((sum, track) => sum + (track.duration ?? 0), 0));
 
+    protected readonly coverId = computed(() => artistCoverId(this.artist()));
     protected readonly coverResource = rxResource({
-        params: () => this.artist()?.image?.id ?? undefined,
+        params: () => this.coverId() ?? undefined,
         stream: ({ params }) => this.coverService.getUrl(params),
     });
+    protected readonly colorResource = rxResource({
+        params: () => this.coverId() ?? undefined,
+        stream: ({ params }) => this.coverColorService.getColor(params),
+    });
+    protected readonly coverColor = computed(() =>
+        this.colorResource.hasValue() ? this.colorResource.value() : null,
+    );
 
     protected readonly coverUrl = computed(() =>
         this.coverResource.hasValue() ? this.coverResource.value() : null,

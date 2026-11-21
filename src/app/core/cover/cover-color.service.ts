@@ -13,8 +13,8 @@ export class CoverColorService {
     getColor(coverId: string): Observable<CoverColor> {
         let color$ = this.cache.get(coverId);
         if (!color$) {
-            color$ = this.coverService.getUrl(coverId).pipe(
-                switchMap((url) => from(sample(url))),
+            color$ = this.coverService.getBlob(coverId).pipe(
+                switchMap((blob) => from(sample(blob))),
                 catchError(() => { this.cache.delete(coverId); return of(NEUTRAL); }),
                 shareReplay({ bufferSize: 1, refCount: false }),
             );
@@ -24,8 +24,7 @@ export class CoverColorService {
     }
 }
 
-async function sample(url: string): Promise<CoverColor> {
-    const blob = await (await fetch(url)).blob();
+async function sample(blob: Blob): Promise<CoverColor> {
     const bitmap = await createImageBitmap(blob, { resizeWidth: SAMPLE, resizeHeight: SAMPLE, resizeQuality: 'low' });
     const canvas = new OffscreenCanvas(SAMPLE, SAMPLE);
     const ctx = canvas.getContext('2d', { willReadFrequently: true });

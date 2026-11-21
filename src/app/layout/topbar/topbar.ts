@@ -14,6 +14,7 @@ export class Topbar {
     private readonly router = inject(Router);
     protected readonly content = inject(TopbarContentService);
     readonly q = input('', { transform: (v: string | undefined) => v ?? '' });
+    readonly scrolled = input(false);
 
     onSearch(value: string) {
         this.router.navigate([], {

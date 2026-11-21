@@ -4,9 +4,14 @@
         <section class="shell-panel">
             <app-atmosphere></app-atmosphere>
             <div class="app-content">
-                <app-topbar></app-topbar>
-                <div class="page-content" cdkVirtualScrollingElement>
-                    <router-outlet />
+                <app-topbar [scrolled]="pageScrolled()"></app-topbar>
+                <div
+                    #pageContent
+                    class="page-content"
+                    cdkVirtualScrollingElement
+                    (scroll)="updatePageScroll(pageContent.scrollTop)"
+                >
+                    <router-outlet (activate)="updatePageScroll(pageContent.scrollTop)" />
                 </div>
                 <app-player></app-player>
             </div>

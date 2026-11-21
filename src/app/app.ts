@@ -21,6 +21,7 @@ import { Player } from './shared/media/player/player';
 export class App {
     protected readonly title = signal('sonar-sound');
     protected readonly atmosphereState = inject(AtmosphereService).state;
+    protected readonly pageScrolled = signal(false);
 
     private readonly authService = inject(AuthService);
     private readonly router = inject(Router);
@@ -33,11 +34,19 @@ export class App {
         effect(() => {
             const isSignedIn = this.authService.isSignedIn();
 
+            if (!isSignedIn) {
+                this.pageScrolled.set(false);
+            }
+
             if (wasSignedIn && !isSignedIn) {
                 this.router.navigate(['/auth'], { queryParams: { returnUrl: this.router.url } });
             }
 
             wasSignedIn = isSignedIn;
         });
+    }
+
+    protected updatePageScroll(scrollTop: number): void {
+        this.pageScrolled.set(scrollTop > 0);
     }
 }

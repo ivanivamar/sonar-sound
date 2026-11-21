@@ -24,6 +24,10 @@
             0 0 24px -10px var(--album);
     }
 
+    @media (max-width: 768px) {
+        width: 100%;
+    }
+
     i {
         font-size: 24px;
         color: var(--ink-tertiary);

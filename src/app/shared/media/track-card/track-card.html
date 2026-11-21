@@ -1,4 +1,14 @@
-<div class="track-card" appRipple [class.current-playing]="isCurrentPlaying()">
+<div
+    class="track-card"
+    appRipple
+    [class.current-playing]="isCurrentPlaying()"
+    role="group"
+    tabindex="0"
+    [attr.aria-label]="track().title"
+    aria-description="Press Enter or Space to play or pause"
+    (click)="playFromRow($event)"
+    (keydown)="playFromKeyboard($event)"
+>
     <div class="lead-wrapper">
         <div class="track-number">
             {{ track()?.track }}
@@ -7,19 +17,16 @@
         <button
             class="play-button button-icon btn-text btn-circle"
             appRipple
-            [disabled]="playerService.isBuffering()"
+            [attr.aria-label]="playLabel()"
+            [attr.aria-busy]="isCurrentBuffering()"
             (click)="play($event)"
         >
-            <i class="material-symbols-rounded">
-                @if (playerService.isBuffering() && playerService.currentTrack() === track()) {
-                    <span class="loading material-symbols-rounded">autorenew</span>
-                } @else {
-                    {{
-                        playerService.currentTrack() === track() && playerService.isPlaying()
-                            ? 'pause'
-                            : 'play_arrow'
-                    }}
-                }
+            <i
+                class="material-symbols-rounded"
+                aria-hidden="true"
+                [class.loading]="isCurrentBuffering()"
+            >
+                {{ icon() }}
             </i>
         </button>
     </div>
@@ -27,13 +34,17 @@
         <ng-content select="[cover]"> </ng-content>
         <div class="track-text">
             <span class="track-title">{{ track()?.title }}</span>
-            <a [routerLink]="['/library/artist/', track()?.artistId]" class="track-artist">{{
-                track()?.artist
-            }}</a>
+            @if (showArtist()) {
+                <a [routerLink]="['/library/artist/', track()?.artistId]" class="track-artist">{{
+                    track()?.artist
+                }}</a>
+            }
         </div>
     </div>
-    <a [routerLink]="['/library/album/', track()?.albumId]" class="track-album">{{
-        track()?.albumTitle
-    }}</a>
+    @if (showAlbum()) {
+        <a [routerLink]="['/library/album/', track()?.albumId]" class="track-album">{{
+            track()?.albumTitle
+        }}</a>
+    }
     <span class="track-duration">{{ track()?.duration | duration }}</span>
 </div>

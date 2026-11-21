@@ -5,16 +5,15 @@
 
     .album-header {
         box-sizing: border-box;
-        height: 470px;
+        min-height: 330px;
         flex-direction: column;
         justify-content: flex-end;
         align-items: stretch;
         display: flex;
         position: relative;
-        margin: -140px 0 0;
+        margin: 0 0 36px;
         gap: 0px;
         overflow: visible;
-        margin-bottom: 36px;
 
         .album-data {
             display: flex;
@@ -73,7 +72,7 @@
                 }
 
                 .album-name {
-                    font-size: 128px;
+                    font-size: 72px;
                     letter-spacing: -0.05em;
                     text-shadow: rgba(0, 0, 0, 0.5) 0px 10px 40px;
                     overflow-wrap: anywhere;
@@ -85,6 +84,15 @@
                 .album-stats {
                     margin-top: 16px;
                     color: var(--ink-secondary);
+
+                    .album-track-count::before {
+                        content: '·';
+                        margin-right: 8px;
+                    }
+
+                    .album-duration {
+                        display: none;
+                    }
                 }
             }
         }
@@ -95,7 +103,7 @@
         flex-direction: column;
         gap: 8px;
         margin-top: 16px;
-        --track-columns: 40px minmax(0, 1.4fr) minmax(0, 1fr) 96px 32px 52px 32px;
+        --track-columns: 40px minmax(0, 1fr) 52px;
 
         .tracks-header {
             height: 32px;
@@ -109,13 +117,91 @@
             font-size: 9px;
             grid-template-columns: var(--track-columns);
             display: grid;
+            align-items: center;
             column-gap: 14px;
+            box-sizing: border-box;
+            padding: 0 14px;
+
+            span:last-child {
+                text-align: right;
+            }
         }
 
         .track-list {
             display: flex;
             flex-direction: column;
             gap: var(--space-1); // rows sit close together: they're one group
+        }
+    }
+
+    @media (max-width: 768px) {
+        padding: 0 16px 30px;
+
+        .album-header {
+            min-height: 0;
+            margin: 0 0 24px;
+            gap: 16px;
+
+            .album-data {
+                flex-direction: column;
+                align-items: center;
+                gap: 18px;
+                margin-top: 0;
+
+                app-cover {
+                    width: min(212px, 70vw);
+                }
+
+                .album-text {
+                    align-items: center;
+                    max-width: 100%;
+                    text-align: center;
+
+                    .album-meta {
+                        justify-content: center;
+                        font-size: 10px;
+                    }
+
+                    .album-name {
+                        font-size: clamp(32px, 9vw, 48px);
+                        line-height: 1;
+                    }
+
+                    .album-stats {
+                        flex-direction: column;
+                        gap: 8px;
+                        margin-top: 0;
+                        font-size: 10px;
+
+                        .album-artist {
+                            img {
+                                display: none;
+                            }
+
+                            .artist-name {
+                                font-size: 14px;
+                                letter-spacing: normal;
+                            }
+                        }
+
+                        .album-track-count::before {
+                            content: none;
+                        }
+
+                        .album-duration {
+                            display: inline;
+                        }
+                    }
+                }
+            }
+        }
+
+        .album-tracks {
+            margin-top: 0;
+
+            .tracks-header {
+                display: none;
+            }
         }
     }
 }

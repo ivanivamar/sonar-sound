@@ -7,6 +7,11 @@ export interface CoverColor {
 
 export const NEUTRAL: CoverColor = { hue: 40, chroma: 0 };
 
+/** CSS colour for a cover's glow, or transparent while the colour is unknown. */
+export function glowColor(color: CoverColor | null | undefined): string {
+    return color ? `oklch(65% ${color.chroma * 0.18} ${color.hue} / 0.65)` : 'transparent';
+}
+
 type Rgb = readonly [number, number, number];
 
 const toLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);

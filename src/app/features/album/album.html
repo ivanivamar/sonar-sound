@@ -9,8 +9,10 @@
                 <app-crumbs [crumbs]="crumbs()"></app-crumbs>
                 <div class="album-data">
                     <app-cover
-                        [resolvedUrl]="coverResource.value()"
+                        [cover]="album()?.cover"
                         [name]="album()?.artist"
+                        [extractColor]="!album()?.coverColor"
+                        (colorResolved)="extractedColor.set($event)"
                     ></app-cover>
                     <div class="album-text">
                         <div class="album-meta">
@@ -20,15 +22,22 @@
                         <h1 class="album-name">{{ album()?.title }}</h1>
                         <div class="album-stats">
                             <div class="album-artist">
-                                <img [src]="artistCoverResource.value()" [alt]="album()?.artist" />
+                                @if (artistCoverUrl(); as artistCover) {
+                                    <img [src]="artistCover" alt="" />
+                                }
                                 <a
                                     [routerLink]="['/library/artist/', album()?.artistId]"
                                     class="artist-name"
                                     >{{ album()?.artist }}</a
                                 >
                             </div>
-                            ·
-                            {{ album()?.trackCount ?? 0 }} tracks ·
+                            <span class="album-track-count">
+                                {{ album()?.trackCount ?? 0 }} tracks<span class="album-duration"
+                                    >@if (totalDuration() !== null) {
+                                        · {{ totalDuration() | duration }}
+                                    }</span
+                                >
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -38,12 +47,16 @@
                 <div class="tracks-header">
                     <span></span>
                     <span>Title</span>
-                    <span></span>
                     <span>Time</span>
                 </div>
                 <div class="track-list">
                     @for (track of tracks(); track track.id) {
-                        <app-track-card [track]="track"> </app-track-card>
+                        <app-track-card
+                            class="album-track"
+                            [track]="track"
+                            [showArtist]="false"
+                            [showAlbum]="false"
+                        ></app-track-card>
                     }
                 </div>
             </div>

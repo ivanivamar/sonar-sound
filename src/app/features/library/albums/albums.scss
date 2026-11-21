@@ -1,6 +1,7 @@
 .albums-grid {
+    --album-card-width: 170px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, 168px);
+    grid-template-columns: repeat(auto-fill, var(--album-card-width));
     gap: 28px 20px;
-    margin-top: var(--space-3);
+    margin-top: 32px;
 }

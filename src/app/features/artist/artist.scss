@@ -1,3 +1,25 @@
+.artist-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    font-size: 16px;
+    font-weight: 600;
+
+    app-cover {
+        flex: none;
+        width: 40px;
+        --cover-radius: 50%;
+    }
+
+    span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
 :host {
     .artist-wrapper {
         display: flex;
@@ -21,7 +43,7 @@
                 z-index: -1;
                 pointer-events: none;
                 position: absolute;
-                inset: -36px -36px -140px; // top, sides, bottom: more room below for the fade
+                inset: -36px -34px -140px; // top, sides, bottom: more room below for the fade
                 mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
                 overflow: hidden;
 
@@ -88,8 +110,13 @@
                         text-transform: uppercase;
                     }
 
+                    .artist-meta {
+                        color: oklch(0.86 0.1 var(--glow-color));
+                        font-weight: 600;
+                    }
+
                     .artist-name {
-                        font-size: 128px;
+                        font-size: 72px;
                         text-shadow: rgba(0, 0, 0, 0.5) 0px 10px 40px;
                         overflow-wrap: anywhere;
                         font-weight: 600;
@@ -138,6 +165,87 @@
                     gap: 22px 14px;
 
                     --album-card-width: 137px;
+                }
+            }
+        }
+
+        @media (max-width: 768px) {
+            padding: 0 16px 30px;
+
+            .artist-header {
+                height: 380px;
+                margin-bottom: 24px;
+
+                .artist-bg {
+                    inset: -36px -16px -100px;
+                }
+
+                app-crumbs {
+                    display: none;
+                }
+
+                .artist-data {
+                    flex-direction: column;
+                    justify-content: flex-end;
+                    gap: 18px;
+
+                    app-cover {
+                        width: 160px;
+                    }
+
+                    .artist-text {
+                        align-items: center;
+                        text-align: center;
+                        gap: 0;
+                        max-width: 100%;
+
+                        .artist-meta {
+                            display: none;
+                        }
+
+                        .artist-name {
+                            font-size: clamp(48px, 17vw, 72px);
+                        }
+
+                        .artist-stats {
+                            margin-top: 12px;
+                            font-size: 10px;
+                        }
+                    }
+                }
+            }
+
+            .artist-cols {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 0;
+
+                .artist-left {
+                    display: none;
+                }
+
+                .artist-disco {
+                    min-width: 0;
+
+                    .disco-grid {
+                        display: flex;
+                        gap: 14px;
+                        overflow-x: auto;
+                        overscroll-behavior-x: contain;
+                        scroll-snap-type: x proximity;
+                        scrollbar-width: none;
+                        margin: 0 -16px;
+                        padding: 0 16px 4px;
+
+                        &::-webkit-scrollbar {
+                            display: none;
+                        }
+
+                        app-album-card {
+                            flex: 0 0 var(--album-card-width);
+                            min-width: 0;
+                            scroll-snap-align: start;
+                        }
+                    }
                 }
             }
         }

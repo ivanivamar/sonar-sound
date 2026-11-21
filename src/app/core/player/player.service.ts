@@ -1,86 +1,135 @@
-import { inject, Injector, runInInjectionContext, Service, signal } from '@angular/core';
+import {
+    computed,
+    effect,
+    inject,
+    Injector,
+    runInInjectionContext,
+    Service,
+    signal,
+    untracked,
+} from '@angular/core';
 import { TrackRow } from '../library/library-file.model';
 import { DriveService } from '../drive/drive.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subject, takeUntil } from 'rxjs';
 import { atmosphere } from '../../layout/atmosphere/atmosphere.service';
 import { CoverColorService } from '../cover/cover-color.service';
 import { LibraryService } from '../library/library.service';
 import { CoverColor } from '../cover/cover-color';
+import { trackCoverId } from '../cover/cover-id';
+import { AuthService } from '../auth/auth.service';
 
 @Service()
 export class PlayerService {
     private readonly injector = inject(Injector);
+    private readonly authService = inject(AuthService);
     private readonly driveService = inject(DriveService);
     private readonly coverColorService = inject(CoverColorService);
     private readonly libraryService = inject(LibraryService);
 
-    readonly currentTrack = signal<TrackRow | null>(null);
-    readonly isPlaying = signal(false);
-    readonly position = signal(0);
-    readonly duration = signal(0);
-    readonly isBuffering = signal(false);
-    readonly error = signal<string | null>(null);
-    readonly cover = signal<string | null>(null);
-    readonly coverColor = signal<CoverColor | null>(null);
+    private readonly _currentTrack = signal<TrackRow | null>(null);
+    private readonly _isPlaying = signal(false);
+    private readonly _position = signal(0);
+    private readonly _duration = signal(0);
+    private readonly _error = signal<string | null>(null);
+    private readonly _cover = signal<string | null>(null);
+    private readonly _coverColor = signal<CoverColor | null>(null);
+    private readonly downloading = signal(false);
+    private readonly stalled = signal(false);
+
+    readonly currentTrack = this._currentTrack.asReadonly();
+    readonly isPlaying = this._isPlaying.asReadonly();
+    readonly position = this._position.asReadonly();
+    readonly duration = this._duration.asReadonly();
+    readonly error = this._error.asReadonly();
+    readonly cover = this._cover.asReadonly();
+    readonly coverColor = this._coverColor.asReadonly();
+    /** True while the track downloads and whenever playback is waiting for data. */
+    readonly isBuffering = computed(() => this.downloading() || this.stalled());
 
     private readonly audio = new Audio();
+    private readonly cancelDownload = new Subject<void>();
     private audioUrl: string | null = null;
+    private sourceReady = false;
     private loadVersion = 0;
     private atmosphereInitialized = false;
 
     constructor() {
-        this.audio.addEventListener('playing', () => this.isPlaying.set(true));
-        this.audio.addEventListener('pause', () => this.isPlaying.set(false));
-        this.audio.addEventListener('ended', () => this.isPlaying.set(false));
-        this.audio.addEventListener('timeupdate', () => this.position.set(this.audio.currentTime));
+        this.audio.addEventListener('playing', () => {
+            this.stalled.set(false);
+            this._isPlaying.set(true);
+        });
+        this.audio.addEventListener('canplay', () => this.stalled.set(false));
+        this.audio.addEventListener('waiting', () => {
+            if (this.audioUrl) this.stalled.set(true);
+        });
+        this.audio.addEventListener('pause', () => {
+            this.stalled.set(false);
+            this._isPlaying.set(false);
+        });
+        this.audio.addEventListener('ended', () => this._isPlaying.set(false));
+        this.audio.addEventListener('timeupdate', () => this._position.set(this.audio.currentTime));
         this.audio.addEventListener('durationchange', () => {
             const duration = this.audio.duration;
-            this.duration.set(Number.isFinite(duration) ? duration : 0);
+            this._duration.set(Number.isFinite(duration) ? duration : 0);
+        });
+        this.audio.addEventListener('error', () => {
+            // Clearing the source also resets the element; only a loaded source is a real failure.
+            if (!this.audioUrl) return;
+
+            this.sourceReady = false;
+            this.stalled.set(false);
+            this._isPlaying.set(false);
+            this._error.set(this.audio.error?.message || 'Could not play this audio file.');
+        });
+
+        effect(() => {
+            if (!this.authService.isSignedIn()) {
+                untracked(() => {
+                    if (this._currentTrack()) this.reset();
+                });
+            }
         });
     }
 
     async playTrack(track: TrackRow): Promise<void> {
-        const version = ++this.loadVersion;
+        this.releaseAudio();
+        const version = this.loadVersion;
 
-        this.audio.pause();
-        this.audio.removeAttribute('src');
-        this.audio.load();
-
-        if (this.audioUrl) {
-            URL.revokeObjectURL(this.audioUrl);
-            this.audioUrl = null;
-        }
-
-        this.currentTrack.set(track);
+        this._currentTrack.set(track);
         this.initializeAtmosphere();
-        this.position.set(0);
-        this.duration.set(0);
-        this.error.set(null);
-        this.coverColor.set(null);
-        this.cover.set(null);
-        this.isBuffering.set(true);
+        this._position.set(0);
+        this._duration.set(0);
+        this._error.set(null);
+        this._coverColor.set(null);
+        this._cover.set(null);
+        this._isPlaying.set(false);
+        this.downloading.set(true);
 
-        void this.loadCoverColor(track, version);
+        void this.loadCover(track, version);
 
         try {
-            const blob = await firstValueFrom(this.driveService.downloadBlob(track.flac.id));
+            const blob = await firstValueFrom(
+                this.driveService.downloadBlob(track.flac.id).pipe(takeUntil(this.cancelDownload)),
+            );
 
-            // Another track was selected while this one was downloading.
+            // Another track was selected, or the session ended, while this one was downloading.
             if (version !== this.loadVersion) return;
 
             this.audioUrl = URL.createObjectURL(blob);
             this.audio.src = this.audioUrl;
+            this.sourceReady = true;
 
             await this.play();
         } catch (error: unknown) {
             if (version !== this.loadVersion) return;
 
-            this.error.set(
+            this.sourceReady = false;
+            this._error.set(
                 error instanceof Error ? error.message : 'Could not download the track.',
             );
         } finally {
             if (version === this.loadVersion) {
-                this.isBuffering.set(false);
+                this.downloading.set(false);
             }
         }
     }
@@ -88,9 +137,12 @@ export class PlayerService {
     async play(): Promise<void> {
         try {
             await this.audio.play();
-            this.error.set(null);
+            this._error.set(null);
         } catch (error: unknown) {
-            this.error.set(
+            // Loading another source interrupts a pending play(); that is not a failure.
+            if (error instanceof DOMException && error.name === 'AbortError') return;
+
+            this._error.set(
                 error instanceof Error ? error.message : 'Could not play audio.',
             );
         }
@@ -100,9 +152,15 @@ export class PlayerService {
         this.audio.pause();
     }
 
+    /** Pauses or resumes the current track, retrying its download if it never loaded. */
     toggle(): void {
-        if (this.audio.paused) {
-            this.play();
+        const track = this._currentTrack();
+        if (!track || this.downloading()) return;
+
+        if (!this.sourceReady) {
+            void this.playTrack(track);
+        } else if (this.audio.paused) {
+            void this.play();
         } else {
             this.pause();
         }
@@ -112,19 +170,57 @@ export class PlayerService {
         this.audio.currentTime = seconds;
     }
 
-    private async loadCoverColor(track: TrackRow, version: number): Promise<void> {
-        try {
-            const coverId = track.cover
-                ?? this.libraryService.getAlbumById(track.albumId)?.cover;
-            if (!coverId) return;
+    /** Stops playback, cancels any pending download and clears all track state. */
+    private reset(): void {
+        this.releaseAudio();
+        this._currentTrack.set(null);
+        this._position.set(0);
+        this._duration.set(0);
+        this._error.set(null);
+        this._coverColor.set(null);
+        this._cover.set(null);
+        this._isPlaying.set(false);
+        this.downloading.set(false);
+    }
 
+    /** Invalidates pending work and releases the audio source and its blob URL. */
+    private releaseAudio(): void {
+        this.loadVersion++;
+        this.cancelDownload.next();
+        this.sourceReady = false;
+        this.stalled.set(false);
+
+        this.audio.pause();
+        this.audio.removeAttribute('src');
+        this.audio.load();
+
+        if (this.audioUrl) {
+            URL.revokeObjectURL(this.audioUrl);
+            this.audioUrl = null;
+        }
+    }
+
+    private async loadCover(track: TrackRow, version: number): Promise<void> {
+        const album = this.libraryService.getAlbumById(track.albumId);
+        const coverId = trackCoverId(track, album);
+        if (!coverId) return;
+
+        this._cover.set(coverId);
+
+        // Only the album's own cover has a precomputed colour.
+        const known = coverId === album?.cover ? album.coverColor : null;
+        if (known) {
+            this._coverColor.set(known);
+            return;
+        }
+
+        try {
             const color = await firstValueFrom(this.coverColorService.getColor(coverId));
             if (version === this.loadVersion) {
-                this.coverColor.set(color);
-                this.cover.set(coverId);
+                this._coverColor.set(color);
             }
         } catch {
-            // Artwork is optional; playback should continue without a colour.
+            // The colour is optional; the cover and playback continue without it.
         }
     }
 

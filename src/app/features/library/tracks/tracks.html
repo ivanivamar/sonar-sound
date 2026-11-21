@@ -22,9 +22,7 @@
     <cdk-virtual-scroll-viewport itemSize="56">
         <div *cdkVirtualFor="let track of filteredTracks(); trackBy: trackById" class="track-list">
             <app-track-card [track]="track">
-                <ng-content select="[cover]">
-                    <app-cover [cover]="track?.cover"></app-cover>
-                </ng-content>
+                <app-cover [cover]="track.cover"></app-cover>
             </app-track-card>
         </div>
     </cdk-virtual-scroll-viewport>

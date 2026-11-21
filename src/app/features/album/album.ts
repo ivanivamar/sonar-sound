@@ -1,13 +1,15 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { Location } from '@angular/common';
 import { LibraryService } from '../../core/library/library.service';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AlbumFile, TrackFile } from '../../core/library/library-file.model';
 import { TrackCard } from '../../shared/media/track-card/track-card';
 import { Cover } from '../../shared/media/cover/cover';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { atmosphere } from '../../layout/atmosphere/atmosphere.service';
 import { CoverColorService } from '../../core/cover/cover-color.service';
+import { Crumbs } from '../../shared/ui/crumbs/crumbs';
+import { CoverService } from '../../core/cover/cover.service';
 
 export interface DiscGroup {
     disc: number;
@@ -15,7 +17,7 @@ export interface DiscGroup {
 }
 
 @Component({
-    imports: [TrackCard, Cover],
+    imports: [TrackCard, Cover, Crumbs, RouterLink],
     selector: 'app-album',
     styleUrl: './album.scss',
     templateUrl: './album.html',
@@ -25,45 +27,45 @@ export class Album {
     private readonly router = inject(Router);
     private readonly location = inject(Location);
     private readonly coverColorService = inject(CoverColorService);
+    private readonly coverService = inject(CoverService);
 
     readonly id = input.required<string>();
+    readonly crumbs = computed(() => [
+        { label: 'Library', url: '/library' },
+        { label: 'Albums', url: '/library/albums' },
+    ]);
 
     readonly album = computed<AlbumFile | undefined>(() => this.libraryService.getAlbumById(this.id()));
-    readonly tracks = computed<TrackFile[]>(() => this.libraryService.getAlbumTracks(this.id()));
-    readonly discGroups = computed<DiscGroup[]>(() => {
-        const map = new Map<number, TrackFile[]>();
-        for (const track of this.tracks()) {
-            if (!map.has(track.disc)) {
-                map.set(track.disc, []);
-            }
-            map.get(track.disc)?.push(track);
-        }
-        return Array.from(map.entries()).map(([disc, tracks]) => ({ disc, tracks }));
+    readonly artist = computed(() => {
+        const artistId = this.album()?.artistId;
+        return artistId ? this.libraryService.getArtistById(artistId) : undefined;
     });
+    readonly tracks = computed<TrackFile[]>(() => this.libraryService.getAlbumTracks(this.id()));
 
     private readonly coverColor = rxResource({
         params: () => this.album()?.cover ?? undefined,
         stream: ({ params }) => this.coverColorService.getColor(params),
     });
+    protected readonly coverResource = rxResource({
+        params: () => this.album()?.cover ?? undefined,
+        stream: ({ params }) => this.coverService.getUrl(params),
+    });
+
+    protected readonly artistCoverResource = rxResource({
+        params: () => this.artist()?.image?.id ?? undefined,
+        stream: ({ params }) => this.coverService.getUrl(params),
+    });
 
     constructor() {
         atmosphere(() => {
             const color = this.coverColor.hasValue() ? this.coverColor.value() : null;
+            console.log('Cover color:', color);
             return {
-                x: '18%',
-                y: '22%',
+                x: '15%',
+                y: '35%',
                 hue: color ? String(color.hue) : null,       // null until read: the playing cover's colour
                 chroma: color ? String(color.chroma) : null,
             };
         });
-    }
-
-    goBack() {
-        const state = this.location.getState() as { navigationId?: number } | null;
-        if ((state?.navigationId ?? 1) > 1) {
-            this.location.back();                       // we came from somewhere in the app
-        } else {
-            this.router.navigate(['/library']);         // opened directly: go to the library
-        }
     }
 }

@@ -2,7 +2,7 @@ import { Component, effect, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth/auth.service';
 import { Sidebar } from './shared/components/sidebar/sidebar';
-import { Atmosphere } from './shared/components/atmosphere/atmosphere';
+import { Atmosphere } from './layout/atmosphere/atmosphere';
 import { Topbar } from './shared/components/topbar/topbar';
 import { CdkVirtualScrollableElement } from '@angular/cdk/scrolling';
 

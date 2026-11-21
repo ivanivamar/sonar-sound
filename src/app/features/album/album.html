@@ -1,61 +1,53 @@
 @if (libraryService.isLoading()) {
     <span>Loading...</span>
 } @else {
-    <div class="album">
-        <button class="go-back-button" (click)="goBack()">
-            <span class="material-symbols-outlined"> arrow_back </span>
-        </button>
-
+    <div class="album-wrapper">
         @if (!album()) {
             <span>Album not found</span>
         } @else {
-            <header>
-                <app-cover [cover]="album()?.cover"></app-cover>
-
-                <div class="album-info">
-                    <span class="album-meta">
-                        ALBUM · {{ album()?.year }} · {{ album()?.genre }}
-                    </span>
-
-                    <h1 class="album-title">
-                        {{ album()?.title }}
-                    </h1>
-
-                    <span class="album-artist">
-                        {{ album()?.artist }}
-                    </span>
-                </div>
-            </header>
-
-            <!-- <header class="album-header">
+            <header class="album-header">
                 <app-crumbs [crumbs]="crumbs()"></app-crumbs>
-                <div class="artist-data">
-                    <app-cover [resolvedUrl]="coverUrl()" [name]="artist()?.name"></app-cover>
-                    <div class="artist-text">
-                        <div class="artist-meta">Artist</div>
-                        <h1 class="artist-name">{{ artist()?.name }}</h1>
-                        <div class="artist-stats">
-                            {{ albums().length }} releases · {{ tracks().length }} tracks ·
-                            {{ totalDuration() | duration }}
+                <div class="album-data">
+                    <app-cover
+                        [resolvedUrl]="coverResource.value()"
+                        [name]="album()?.artist"
+                    ></app-cover>
+                    <div class="album-text">
+                        <div class="album-meta">
+                            Album · {{ album()?.year }}
+                            {{ album()?.genre ? '· ' + album()?.genre : '' }}
+                        </div>
+                        <h1 class="album-name">{{ album()?.title }}</h1>
+                        <div class="album-stats">
+                            <div class="album-artist">
+                                <img [src]="artistCoverResource.value()" [alt]="album()?.artist" />
+                                <a
+                                    [routerLink]="['/library/artist/', album()?.artistId]"
+                                    class="artist-name"
+                                    >{{ album()?.artist }}</a
+                                >
+                            </div>
+                            ·
+                            {{ album()?.trackCount ?? 0 }} tracks ·
                         </div>
                     </div>
                 </div>
-            </header> -->
+            </header>
 
             <div class="album-tracks">
-                @for (disc of discGroups(); track disc.disc) {
-                    <div class="album-disk">
-                        <span class="material-symbols-outlined"> album </span>
-                        <span class="album-disk-number">Disc {{ disc.disc }}</span>
-                    </div>
-                    <div class="track-list">
-                        @for (track of disc.tracks; track track.id) {
-                            <app-track-card [track]="track">
-                                <span lead>{{ track.track ?? '-' }}</span>
-                            </app-track-card>
-                        }
-                    </div>
-                }
+                <div class="tracks-header">
+                    <span></span>
+                    <span>Title</span>
+                    <span></span>
+                    <span>Time</span>
+                </div>
+                <div class="track-list">
+                    @for (track of tracks(); track track.id) {
+                        <app-track-card [track]="track">
+                            <span lead>{{ track.track ?? '-' }}</span>
+                        </app-track-card>
+                    }
+                </div>
             </div>
         }
     </div>

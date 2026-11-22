@@ -1,4 +1,4 @@
-<footer class="player">
+<footer class="player" (click)="nowPlaying.toggle()" aria-hidden="true">
     <div class="player-slider-wrapper">
         <app-slider
             [value]="position()"
@@ -50,40 +50,22 @@
         }
     </div>
 
-    <div class="player-controls">
-        <button class="button-icon btn-text control-secondary" disabled aria-label="Shuffle">
-            <i class="material-symbols-rounded" aria-hidden="true">shuffle</i>
-        </button>
-        <button class="button-icon btn-text control-secondary" disabled aria-label="Previous track">
-            <i class="material-symbols-rounded" aria-hidden="true">skip_previous</i>
-        </button>
-        <button
-            class="button-icon btn-filled btn-circle"
-            appRipple
-            [disabled]="!currentTrack()"
-            [attr.aria-label]="isPlaying() ? 'Pause' : 'Play'"
-            [attr.aria-busy]="isBuffering()"
-            (click)="toggleTrack()"
-        >
-            <i
-                class="material-symbols-rounded"
-                aria-hidden="true"
-                [class.loading]="isBuffering()"
-            >
-                {{ isBuffering() ? 'autorenew' : isPlaying() ? 'pause' : 'play_arrow' }}
-            </i>
-        </button>
-        <button class="button-icon btn-text control-secondary" disabled aria-label="Next track">
-            <i class="material-symbols-rounded" aria-hidden="true">skip_next</i>
-        </button>
-        <button class="button-icon btn-text control-secondary" disabled aria-label="Repeat">
-            <i class="material-symbols-rounded" aria-hidden="true">repeat</i>
-        </button>
-    </div>
+    <app-playback-controls class="player-controls"></app-playback-controls>
 
     <div class="player-actions">
         <span class="track-duration">
             {{ position() | duration }} / {{ duration() | duration }}
         </span>
+        <button
+            class="button-icon btn-text control-secondary"
+            [disabled]="!currentTrack()"
+            aria-label="Now Playing"
+        >
+            <i class="material-symbols-rounded" aria-hidden="true">
+                {{ nowPlaying.isOpen() ? 'expand_more' : 'expand_less' }}
+            </i>
+        </button>
     </div>
 </footer>
+
+<app-now-playing #nowPlaying></app-now-playing>

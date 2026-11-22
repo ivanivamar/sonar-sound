@@ -4,6 +4,7 @@ import { ClickOutside } from '../../shared/directives/click-outside';
 import { Ripple } from '../../shared/directives/ripple';
 import { AccountPopup } from './account-popup/account-popup';
 import { UserService } from '../../core/user/user.service';
+import { ViewportService } from '../../core/viewport/viewport.service';
 
 @Component({
     imports: [RouterLink, RouterLinkActive, ClickOutside, Ripple, AccountPopup],
@@ -14,7 +15,7 @@ import { UserService } from '../../core/user/user.service';
 export class Sidebar {
     private readonly userService = inject(UserService);
     isAccountPopupVisible = signal(false);
-    isPhoneSize = signal(window.innerWidth <= 768);
+    private readonly isPhoneSize = inject(ViewportService).isPhone;
 
     private readonly desktopOnlyNavItems: SidebarNavItem[] = [
         {

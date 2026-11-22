@@ -100,6 +100,8 @@ Read the old worker for ideas, but don't bring over its unrelated offline cachin
 
 ## 6. Add Media Session controls
 
+The shared [PlayerService](./src/app/core/player/player.service.ts) owns playback; [MediaSessionService](./src/app/core/player/media-session.service.ts) manages OS media controls and receives playback callbacks from it.
+
 When the current track changes, set Media Session metadata: title, artist, album and, when available, artwork. The cover service already resolves Drive covers; verify that your target browser and OS can use the chosen artwork URL.
 
 Register supported handlers for:

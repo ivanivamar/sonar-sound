@@ -1,0 +1,28 @@
+<button class="button-icon btn-text control-secondary" disabled aria-label="Shuffle">
+    <i class="material-symbols-rounded" aria-hidden="true">shuffle</i>
+</button>
+<button class="button-icon btn-text control-secondary" disabled aria-label="Previous track">
+    <i class="material-symbols-rounded" aria-hidden="true">skip_previous</i>
+</button>
+<button
+    class="button-icon btn-filled btn-circle control-play"
+    appRipple
+    [disabled]="!playerService.currentTrack()"
+    [attr.aria-label]="playerService.isPlaying() ? 'Pause' : 'Play'"
+    [attr.aria-busy]="playerService.isBuffering()"
+    (click)="toggle($event)"
+>
+    <i
+        class="material-symbols-rounded"
+        aria-hidden="true"
+        [class.loading]="playerService.isBuffering()"
+    >
+        {{ playIcon() }}
+    </i>
+</button>
+<button class="button-icon btn-text control-secondary" disabled aria-label="Next track">
+    <i class="material-symbols-rounded" aria-hidden="true">skip_next</i>
+</button>
+<button class="button-icon btn-text control-secondary" disabled aria-label="Repeat">
+    <i class="material-symbols-rounded" aria-hidden="true">repeat</i>
+</button>

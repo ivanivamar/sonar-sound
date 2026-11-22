@@ -1,0 +1,112 @@
+<div
+    class="now-playing-wrapper"
+    role="dialog"
+    aria-label="Now playing"
+    [class.open]="isOpen()"
+    [attr.inert]="isOpen() ? null : ''"
+    [style.--glow-color]="playerService.coverColor()?.hue"
+    [style.--glow-chroma]="playerService.coverColor()?.chroma"
+>
+    <app-atmosphere></app-atmosphere>
+
+    <header class="now-playing-header">
+        <button
+            #closeButton
+            class="button button-text close-button"
+            appRipple
+            (click)="close()"
+            aria-label="Close"
+        >
+            <i class="material-symbols-rounded" aria-hidden="true">keyboard_arrow_down</i>
+            <span class="close-label">Close</span>
+        </button>
+
+        <div class="playing-from">
+            <span class="playing-from-label">Playing from source</span>
+            <span class="playing-from-source">Test Source</span>
+        </div>
+
+        <div class="header-actions"></div>
+    </header>
+
+    <div class="now-playing-track">
+        <app-cover [cover]="playerService.cover()"></app-cover>
+
+        @if (viewport.isPhone()) {
+            @let track = playerService.currentTrack();
+            <div class="track-info">
+                <div class="track-heading">
+                    <h2 class="track-title">{{ track?.title }}</h2>
+                    <p class="track-artist-album">
+                        <span class="track-artist">{{ track?.artist }}</span>
+                        @if (track?.albumId) {
+                            ·
+                            <a [routerLink]="['/library/album/', track?.albumId]" (click)="close()">
+                                {{ track?.albumTitle }}
+                            </a>
+                        }
+                    </p>
+                    <button
+                        class="button-icon btn-text btn-circle track-favorite"
+                        disabled
+                        aria-label="Add to favorites"
+                    >
+                        <i class="material-symbols-rounded" aria-hidden="true">favorite</i>
+                    </button>
+                </div>
+
+                <div class="track-progress">
+                    <app-slider
+                        [value]="playerService.position()"
+                        [max]="playerService.duration()"
+                        (valueChange)="seek($event)"
+                    ></app-slider>
+                    <div class="track-times" aria-hidden="true">
+                        <span>{{ playerService.position() | duration }}</span>
+                        <span>-{{ remaining() | duration }}</span>
+                    </div>
+                </div>
+
+                <app-playback-controls
+                    class="track-controls"
+                    role="group"
+                    aria-label="Playback controls"
+                ></app-playback-controls>
+
+                <div class="track-shortcuts" role="group" aria-label="Panels">
+                    @for (tab of tabs; track tab.id) {
+                        <button
+                            class="button button-outlined"
+                            appRipple
+                            [class.active]="tab.id === currentTab()"
+                            [attr.aria-pressed]="tab.id === currentTab()"
+                            (click)="currentTab.set(tab.id)"
+                        >
+                            <i class="material-symbols-rounded" aria-hidden="true">
+                                {{ shortcutIcons[tab.id] }}
+                            </i>
+                            {{ tab.title }}
+                        </button>
+                    }
+                </div>
+            </div>
+        } @else {
+            <div class="track-panels">
+                <app-tabs
+                    [tabs]="tabs"
+                    [currentTab]="currentTab()"
+                    (currentTabChange)="currentTab.set($event)"
+                ></app-tabs>
+
+                @switch (currentTab()) {
+                    @case ('queue') {
+                        <p>Queue content goes here</p>
+                    }
+                    @case ('lyrics') {
+                        <p>Lyrics content goes here</p>
+                    }
+                }
+            </div>
+        }
+    </div>
+</div>

@@ -17,6 +17,13 @@ import { LibraryService } from '../library/library.service';
 import { CoverColor } from '../cover/cover-color';
 import { trackCoverId } from '../cover/cover-id';
 import { AuthService } from '../auth/auth.service';
+import { MediaSessionService } from './media-session.service';
+
+export enum RepeatMode {
+    Off,
+    One,
+    All,
+}
 
 @Service()
 export class PlayerService {
@@ -26,6 +33,7 @@ export class PlayerService {
     private readonly coverColorService = inject(CoverColorService);
     private readonly libraryService = inject(LibraryService);
     private readonly driveStreamService = inject(DriveStreamService);
+    private readonly mediaSession = inject(MediaSessionService);
 
     // Signals and state variables for the player.
     private readonly _currentTrack = signal<TrackRow | null>(null);
@@ -37,6 +45,7 @@ export class PlayerService {
     private readonly _coverColor = signal<CoverColor | null>(null);
     private readonly loading = signal(false);
     private readonly stalled = signal(false);
+    private readonly _repeat = signal<RepeatMode>(RepeatMode.Off);
 
     // Readonly versions of the signals exposed to consumers of the service.
     readonly currentTrack = this._currentTrack.asReadonly();
@@ -48,6 +57,7 @@ export class PlayerService {
     readonly coverColor = this._coverColor.asReadonly();
     /** True while the track loads and whenever playback is waiting for data. */
     readonly isBuffering = computed(() => this.loading() || this.stalled());
+    readonly repeat = this._repeat.asReadonly();
 
     // HTMLAudioElement used for playback and related state.
     private readonly audio = new Audio();
@@ -60,6 +70,7 @@ export class PlayerService {
         this.audio.addEventListener('playing', () => {
             this.stalled.set(false);
             this._isPlaying.set(true);
+            this.mediaSession.setPlaybackState('playing');
         });
         this.audio.addEventListener('canplay', () => this.stalled.set(false));
         this.audio.addEventListener('waiting', () => {
@@ -68,12 +79,20 @@ export class PlayerService {
         this.audio.addEventListener('pause', () => {
             this.stalled.set(false);
             this._isPlaying.set(false);
+            this.mediaSession.setPlaybackState('paused');
         });
-        this.audio.addEventListener('ended', () => this._isPlaying.set(false));
-        this.audio.addEventListener('timeupdate', () => this._position.set(this.audio.currentTime));
+        this.audio.addEventListener('ended', () => {
+            this._isPlaying.set(false);
+            this.mediaSession.setPlaybackState('paused');
+        });
+        this.audio.addEventListener('timeupdate', () => {
+            this._position.set(this.audio.currentTime);
+            this.mediaSession.updatePosition(this.audio);
+        });
         this.audio.addEventListener('durationchange', () => {
             const duration = this.audio.duration;
             this._duration.set(Number.isFinite(duration) ? duration : 0);
+            this.mediaSession.updatePosition(this.audio);
         });
         this.audio.addEventListener('error', () => {
             // Clearing the source also resets the element; only a loaded source is a real failure.
@@ -87,6 +106,27 @@ export class PlayerService {
 
         void this.driveStreamService.register().catch((error: unknown) => {
             console.error('Could not register the Drive streaming worker:', error);
+        });
+
+        this.mediaSession.registerActions({
+            play: () => {
+                const track = this._currentTrack();
+                if (!track || this.loading()) return;
+
+                if (!this.sourceReady) {
+                    void this.playTrack(track);
+                } else if (this.audio.paused) {
+                    void this.play();
+                }
+            },
+            pause: () => {
+                if (this._currentTrack() && !this.loading()) this.pause();
+            },
+            seek: (time) => {
+                const duration = this.audio.duration;
+                if (!this.sourceReady || !Number.isFinite(duration) || duration <= 0) return;
+                this.seek(Math.min(duration, Math.max(0, time)));
+            },
         });
 
         effect(() => {
@@ -103,6 +143,9 @@ export class PlayerService {
         const version = this.loadVersion;
 
         this._currentTrack.set(track);
+
+        this.mediaSession.setTrack(track);
+
         this.initializeAtmosphere();
         this._position.set(0);
         this._duration.set(0);
@@ -175,6 +218,16 @@ export class PlayerService {
         this.audio.currentTime = seconds;
     }
 
+    toggleRepeat() {
+        this._repeat.set(
+            this._repeat() === RepeatMode.Off
+                ? RepeatMode.One
+                : this._repeat() === RepeatMode.One
+                    ? RepeatMode.All
+                    : RepeatMode.Off
+        );
+    }
+
     /** Stops playback, cancels any pending load and clears all track state. */
     private reset(): void {
         this.releaseAudio();
@@ -186,6 +239,8 @@ export class PlayerService {
         this._cover.set(null);
         this._isPlaying.set(false);
         this.loading.set(false);
+
+        this.mediaSession.clear();
     }
 
     /** Releases the audio source and cancels any pending load. */
@@ -193,6 +248,8 @@ export class PlayerService {
         this.loadVersion++;
         this.sourceReady = false;
         this.stalled.set(false);
+
+        this.mediaSession.clearPosition();
 
         this.audio.pause();
         this.audioUrl = null;
@@ -207,6 +264,7 @@ export class PlayerService {
         if (!coverId) return;
 
         this._cover.set(coverId);
+        void this.mediaSession.setArtwork(coverId);
 
         // Only the album's own cover has a precomputed colour.
         const known = coverId === album?.cover ? album.coverColor : null;

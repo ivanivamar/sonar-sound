@@ -1,0 +1,43 @@
+// Hosts can tune the layout with --controls-gap, --controls-justify,
+// --controls-secondary-display, --controls-play-size and --controls-play-icon-size.
+:host {
+    display: flex;
+    align-items: center;
+    justify-content: var(--controls-justify, center);
+    gap: var(--controls-gap, 16px);
+}
+
+button:focus-visible {
+    outline: 2px solid var(--ink-primary);
+    outline-offset: 2px;
+}
+
+// Shuffle, skip and repeat arrive in Stage 5.
+.control-secondary {
+    display: var(--controls-secondary-display, inline-flex);
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+
+        &:hover {
+            background: none;
+        }
+    }
+}
+
+.control-play {
+    width: var(--controls-play-size, 46px);
+    height: var(--controls-play-size, 46px);
+
+    i {
+        font-size: var(--controls-play-icon-size, 24px);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: default;
+        transform: none;
+        box-shadow: none;
+    }
+}

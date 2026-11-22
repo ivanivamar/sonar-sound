@@ -96,34 +96,11 @@
         }
     }
 
-    .player-controls {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 16px;
-
-        // Shuffle, skip and repeat arrive in Stage 5.
-        .control-secondary:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-
-            &:hover {
-                background: none;
-            }
-        }
-
-        .btn-filled:disabled {
-            opacity: 0.5;
-            cursor: default;
-            transform: none;
-            box-shadow: none;
-        }
-    }
-
     .player-actions {
         display: flex;
         justify-content: flex-end;
         align-items: center;
+        gap: 16px;
 
         .track-duration {
             font-size: 11px;
@@ -157,9 +134,12 @@
             }
         }
 
-        .player-actions,
-        .player-controls .control-secondary {
+        .player-actions {
             display: none;
+        }
+
+        .player-controls {
+            --controls-secondary-display: none;
         }
     }
 }

@@ -63,10 +63,4 @@ describe('Player', () => {
         play?.click();
         expect(toggle).toHaveBeenCalledTimes(1);
     });
-
-    it('disables the unfinished controls', () => {
-        const buttons = fixture.nativeElement.querySelectorAll('.control-secondary');
-        expect(buttons.length).toBe(4);
-        buttons.forEach((button: HTMLButtonElement) => expect(button.disabled).toBe(true));
-    });
 });

@@ -1,4 +1,10 @@
-<footer class="player" (click)="nowPlaying.toggle()" aria-hidden="true">
+<footer
+    class="player"
+    (click)="onFooterClick($event)"
+    (keydown)="onFooterKeydown($event)"
+    tabindex="0"
+    appRipple
+>
     <div class="player-slider-wrapper">
         <app-slider
             [value]="position()"
@@ -60,6 +66,7 @@
             class="button-icon btn-text control-secondary"
             [disabled]="!currentTrack()"
             aria-label="Now Playing"
+            (click)="nowPlaying.toggle()"
         >
             <i class="material-symbols-rounded" aria-hidden="true">
                 {{ nowPlaying.isOpen() ? 'expand_more' : 'expand_less' }}

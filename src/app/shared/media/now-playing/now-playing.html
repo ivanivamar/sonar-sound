@@ -1,7 +1,9 @@
 <div
+    #dialog
     class="now-playing-wrapper"
     role="dialog"
     aria-label="Now playing"
+    tabindex="-1"
     [class.open]="isOpen()"
     [attr.inert]="isOpen() ? null : ''"
     [style.--glow-color]="playerService.coverColor()?.hue"
@@ -11,7 +13,6 @@
 
     <header class="now-playing-header">
         <button
-            #closeButton
             class="button button-text close-button"
             appRipple
             (click)="close()"

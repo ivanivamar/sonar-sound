@@ -9,6 +9,7 @@ import { TrackRow } from '../library/library-file.model';
 import { LibraryService } from '../library/library.service';
 import { MediaSessionService } from './media-session.service';
 import { PlayerService } from './player.service';
+import { PlayHistoryService } from './play-history.service';
 
 class FakeMetadata {
     title: string;
@@ -32,6 +33,7 @@ class FakeAudio extends EventTarget {
     playbackRate = 1;
     src = '';
     error = null;
+    seeking = false;
 
     constructor() {
         super();
@@ -62,8 +64,16 @@ class FakeAudio extends EventTarget {
 
 function track(id: string): TrackRow {
     return {
-        id, title: `Track ${id}`, artist: 'Artist', albumId: 'album', artistId: 'artist',
-        disc: 1, track: 1, syncedLyrics: false, addedAt: '', albumTitle: 'Album',
+        id,
+        title: `Track ${id}`,
+        artist: 'Artist',
+        albumId: 'album',
+        artistId: 'artist',
+        disc: 1,
+        track: 1,
+        syncedLyrics: false,
+        addedAt: '',
+        albumTitle: 'Album',
         flac: { id: `flac-${id}`, size: 100 },
         mobile: { id: 'mobile', size: 100, codec: 'aac', bitrate: '128' },
         cover: `cover-${id}`,
@@ -88,9 +98,11 @@ describe('MediaSessionService', () => {
         media = {
             metadata: null,
             playbackState: 'none',
-            setActionHandler: vi.fn((action: MediaSessionAction, handler: MediaSessionActionHandler) => {
-                handlers.set(action, handler);
-            }),
+            setActionHandler: vi.fn(
+                (action: MediaSessionAction, handler: MediaSessionActionHandler) => {
+                    handlers.set(action, handler);
+                },
+            ),
             setPositionState: vi.fn(),
         };
         vi.stubGlobal('navigator', { mediaSession: media });
@@ -99,7 +111,10 @@ describe('MediaSessionService', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: CoverService, useValue: { getUrl } },
-                { provide: CoverColorService, useValue: { getColor: () => of({ hue: 1, chroma: 1 }) } },
+                {
+                    provide: CoverColorService,
+                    useValue: { getColor: () => of({ hue: 1, chroma: 1 }) },
+                },
                 { provide: LibraryService, useValue: { getAlbumById: () => undefined } },
                 { provide: AuthService, useValue: { isSignedIn: signedIn } },
                 {
@@ -169,7 +184,11 @@ describe('MediaSessionService', () => {
         expect(media.setPositionState).not.toHaveBeenCalled();
 
         service.updatePosition({ duration: 10, currentTime: 12, playbackRate: 1 });
-        expect(media.setPositionState).toHaveBeenCalledWith({ duration: 10, position: 10, playbackRate: 1 });
+        expect(media.setPositionState).toHaveBeenCalledWith({
+            duration: 10,
+            position: 10,
+            playbackRate: 1,
+        });
         service.clearPosition();
         expect(media.setPositionState).toHaveBeenLastCalledWith();
     });
@@ -187,10 +206,12 @@ describe('MediaSessionService', () => {
     });
 
     it('keeps play and pause handlers when seeking is unsupported', () => {
-        media.setActionHandler.mockImplementation((action: MediaSessionAction, handler: MediaSessionActionHandler) => {
-            if (action === 'seekto') throw new TypeError('Unsupported action');
-            handlers.set(action, handler);
-        });
+        media.setActionHandler.mockImplementation(
+            (action: MediaSessionAction, handler: MediaSessionActionHandler) => {
+                if (action === 'seekto') throw new TypeError('Unsupported action');
+                handlers.set(action, handler);
+            },
+        );
         const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
         const play = vi.fn();
         const pause = vi.fn();
@@ -202,5 +223,171 @@ describe('MediaSessionService', () => {
         expect(pause).toHaveBeenCalledOnce();
         expect(warning).toHaveBeenCalledOnce();
         warning.mockRestore();
+    });
+
+    it('does not count a seek as listening time', async () => {
+        let now = 0;
+        const clock = vi.spyOn(performance, 'now').mockImplementation(() => now);
+
+        try {
+            const player = TestBed.inject(PlayerService);
+            const history = TestBed.inject(PlayHistoryService);
+            await player.playTrack(track('a'));
+
+            const audio = FakeAudio.instance;
+
+            // Listen for 10 seconds.
+            now = 10_000;
+            audio.currentTime = 10;
+            audio.dispatchEvent(new Event('timeupdate'));
+
+            // Seek to 70 seconds.
+            player.seek(70);
+            audio.seeking = true;
+            audio.dispatchEvent(new Event('seeking'));
+            audio.dispatchEvent(new Event('timeupdate'));
+            audio.seeking = false;
+            audio.dispatchEvent(new Event('seeked'));
+
+            // Another 19 seconds: 29 heard in total.
+            now = 29_000;
+            audio.currentTime = 89;
+            audio.dispatchEvent(new Event('timeupdate'));
+            expect(history.plays()).toHaveLength(0);
+
+            // One more second reaches the threshold.
+            now = 30_000;
+            audio.currentTime = 90;
+            audio.dispatchEvent(new Event('timeupdate'));
+            expect(history.plays()).toHaveLength(1);
+            expect(history.plays()[0].trackId).toBe('a');
+
+            // It must not count twice.
+            now = 31_000;
+            audio.currentTime = 91;
+            audio.dispatchEvent(new Event('timeupdate'));
+            expect(history.plays()).toHaveLength(1);
+        } finally {
+            clock.mockRestore();
+        }
+    });
+
+    it('does not count paused or buffering time', async () => {
+        let now = 0;
+        const clock = vi.spyOn(performance, 'now').mockImplementation(() => now);
+
+        try {
+            const player = TestBed.inject(PlayerService);
+            const history = TestBed.inject(PlayHistoryService);
+            await player.playTrack(track('a'));
+            const audio = FakeAudio.instance;
+
+            now = 10_000;
+            audio.currentTime = 10;
+            audio.dispatchEvent(new Event('timeupdate'));
+
+            player.pause();
+            now = 70_000;
+            audio.dispatchEvent(new Event('timeupdate'));
+            expect(history.plays()).toHaveLength(0);
+
+            await player.play();
+            now = 80_000;
+            audio.currentTime = 20;
+            audio.dispatchEvent(new Event('timeupdate'));
+
+            audio.dispatchEvent(new Event('waiting'));
+            now = 140_000;
+            audio.dispatchEvent(new Event('timeupdate'));
+            expect(history.plays()).toHaveLength(0);
+
+            audio.dispatchEvent(new Event('playing'));
+            now = 150_000;
+            audio.currentTime = 30;
+            audio.dispatchEvent(new Event('timeupdate'));
+            expect(history.plays()).toHaveLength(1);
+        } finally {
+            clock.mockRestore();
+        }
+    });
+
+    it('counts a short track again when explicitly restarted', async () => {
+        let now = 0;
+        const clock = vi.spyOn(performance, 'now').mockImplementation(() => now);
+
+        try {
+            const player = TestBed.inject(PlayerService);
+            const history = TestBed.inject(PlayHistoryService);
+            const audio = FakeAudio.instance;
+            audio.duration = 40;
+
+            await player.playTrack(track('a'));
+
+            now = 19_000;
+            audio.currentTime = 19;
+            audio.dispatchEvent(new Event('timeupdate'));
+            expect(history.plays()).toHaveLength(0);
+
+            now = 20_000;
+            audio.currentTime = 20;
+            audio.dispatchEvent(new Event('timeupdate'));
+            expect(history.plays()).toHaveLength(1);
+
+            await player.playTrack(track('a'));
+            now = 40_000;
+            audio.currentTime = 20;
+            audio.dispatchEvent(new Event('timeupdate'));
+            expect(history.plays()).toHaveLength(2);
+        } finally {
+            clock.mockRestore();
+        }
+    });
+
+    it('starts a fresh count on track switch and ignores backward seeks', async () => {
+        let now = 0;
+        const clock = vi.spyOn(performance, 'now').mockImplementation(() => now);
+
+        try {
+            const player = TestBed.inject(PlayerService);
+            const history = TestBed.inject(PlayHistoryService);
+            await player.playTrack(track('a'));
+            const audio = FakeAudio.instance;
+
+            now = 10_000;
+            audio.currentTime = 10;
+            audio.dispatchEvent(new Event('timeupdate'));
+
+            await player.playTrack(track('b'));
+
+            now = 20_000;
+            audio.currentTime = 10;
+            audio.dispatchEvent(new Event('timeupdate'));
+
+            player.seek(0);
+            audio.seeking = true;
+            audio.dispatchEvent(new Event('seeking'));
+            audio.seeking = false;
+            audio.dispatchEvent(new Event('seeked'));
+
+            now = 40_000;
+            audio.currentTime = 20;
+            audio.dispatchEvent(new Event('timeupdate'));
+
+            expect(history.plays()).toHaveLength(1);
+            expect(history.plays()[0].trackId).toBe('b');
+        } finally {
+            clock.mockRestore();
+        }
+    });
+
+    it('clears temporary play history when signed out', () => {
+        TestBed.inject(PlayerService);
+        const history = TestBed.inject(PlayHistoryService);
+        history.record('track-a', 1000);
+
+        signedIn.set(false);
+        TestBed.tick();
+
+        expect(history.plays()).toEqual([]);
     });
 });

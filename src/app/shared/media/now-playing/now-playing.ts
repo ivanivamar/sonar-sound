@@ -39,7 +39,7 @@ export class NowPlaying {
     protected readonly viewport = inject(ViewportService);
     private readonly document = inject(DOCUMENT);
     private readonly injector = inject(Injector);
-    private readonly closeButton = viewChild.required<ElementRef<HTMLButtonElement>>('closeButton');
+    private readonly dialog = viewChild.required<ElementRef<HTMLElement>>('dialog');
     private returnFocusTo: HTMLElement | null = null;
 
     readonly isOpen = signal(false);
@@ -69,7 +69,9 @@ export class NowPlaying {
         if (!this.playerService.currentTrack() || this.isOpen()) return;
         this.returnFocusTo = this.document.activeElement as HTMLElement | null;
         this.isOpen.set(true);
-        afterNextRender(() => this.closeButton().nativeElement.focus(), {
+        afterNextRender(() => {
+            if (this.isOpen()) this.dialog().nativeElement.focus();
+        }, {
             injector: this.injector,
         });
     }

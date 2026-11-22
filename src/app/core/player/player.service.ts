@@ -8,6 +8,8 @@ import {
     signal,
     untracked,
 } from '@angular/core';
+import { PlayHistoryService } from './play-history.service';
+import { PlayTrackingService } from './play-tracking.service';
 import { DriveStreamService } from '../drive/drive-stream.service';
 import { TrackRow } from '../library/library-file.model';
 import { firstValueFrom } from 'rxjs';
@@ -34,6 +36,8 @@ export class PlayerService {
     private readonly libraryService = inject(LibraryService);
     private readonly driveStreamService = inject(DriveStreamService);
     private readonly mediaSession = inject(MediaSessionService);
+    private readonly playTracking = inject(PlayTrackingService);
+    private readonly playHistory = inject(PlayHistoryService);
 
     // Signals and state variables for the player.
     private readonly _currentTrack = signal<TrackRow | null>(null);
@@ -65,6 +69,10 @@ export class PlayerService {
     private sourceReady = false;
     private loadVersion = 0;
     private atmosphereInitialized = false;
+
+    private trackingStarted = false;
+    private trackingAdvancing = false;
+    private trackingSeeking = false;
 
     constructor() {
         this.audio.addEventListener('playing', () => {
@@ -129,10 +137,13 @@ export class PlayerService {
             },
         });
 
+        this.attachPlayTracking();
+
         effect(() => {
             if (!this.authService.isSignedIn()) {
                 untracked(() => {
                     if (this._currentTrack()) this.reset();
+                    this.playHistory.clear();
                 });
             }
         });
@@ -172,9 +183,7 @@ export class PlayerService {
             if (version !== this.loadVersion) return;
 
             this.sourceReady = false;
-            this._error.set(
-                error instanceof Error ? error.message : 'Could not load the track.',
-            );
+            this._error.set(error instanceof Error ? error.message : 'Could not load the track.');
         } finally {
             if (version === this.loadVersion) {
                 this.loading.set(false);
@@ -190,9 +199,7 @@ export class PlayerService {
             // Loading another source interrupts a pending play(); that is not a failure.
             if (error instanceof DOMException && error.name === 'AbortError') return;
 
-            this._error.set(
-                error instanceof Error ? error.message : 'Could not play audio.',
-            );
+            this._error.set(error instanceof Error ? error.message : 'Could not play audio.');
         }
     }
 
@@ -214,8 +221,22 @@ export class PlayerService {
         }
     }
 
-    seek(seconds: number) {
-        this.audio.currentTime = seconds;
+    seek(seconds: number): void {
+        if (seconds === this.audio.currentTime) return;
+
+        this.sampleHeard();
+        this.trackingSeeking = true;
+        this.playTracking.stopProgress();
+
+        try {
+            this.audio.currentTime = seconds;
+        } catch (error) {
+            this.trackingSeeking = false;
+            if (this.trackingAdvancing && !this.audio.seeking) {
+                this.resumeTrackingProgress();
+            }
+            throw error;
+        }
     }
 
     toggleRepeat() {
@@ -223,8 +244,8 @@ export class PlayerService {
             this._repeat() === RepeatMode.Off
                 ? RepeatMode.One
                 : this._repeat() === RepeatMode.One
-                    ? RepeatMode.All
-                    : RepeatMode.Off
+                  ? RepeatMode.All
+                  : RepeatMode.Off,
         );
     }
 
@@ -245,6 +266,7 @@ export class PlayerService {
 
     /** Releases the audio source and cancels any pending load. */
     private releaseAudio(): void {
+        this.finishTracking();
         this.loadVersion++;
         this.sourceReady = false;
         this.stalled.set(false);
@@ -255,7 +277,80 @@ export class PlayerService {
         this.audioUrl = null;
         this.audio.removeAttribute('src');
         this.audio.load();
+    }
 
+    private sampleHeard(): void {
+        if (!this.trackingAdvancing || this.trackingSeeking || this.audio.seeking) return;
+
+        this.playTracking.sampleProgress(
+            this.audio.currentTime,
+            performance.now(),
+            this.audio.playbackRate,
+        );
+    }
+
+    private resumeTrackingProgress(): void {
+        this.playTracking.resumeProgress(
+            this.audio.currentTime,
+            performance.now(),
+            this.audio.playbackRate,
+        );
+    }
+
+    private finishTracking(): void {
+        this.sampleHeard();
+        this.playTracking.clear();
+        this.trackingStarted = false;
+        this.trackingAdvancing = false;
+        this.trackingSeeking = false;
+    }
+
+    private attachPlayTracking(): void {
+        this.audio.addEventListener('playing', () => {
+            const track = this._currentTrack();
+            if (!track || !this.audioUrl || this.audio.paused) return;
+
+            if (!this.trackingStarted) {
+                this.playTracking.start(track.id, Date.now(), this.audio.duration);
+                this.trackingStarted = true;
+            }
+
+            this.trackingAdvancing = true;
+            if (!this.trackingSeeking && !this.audio.seeking) {
+                this.resumeTrackingProgress();
+            }
+        });
+
+        this.audio.addEventListener('timeupdate', () => this.sampleHeard());
+        this.audio.addEventListener('ratechange', () => this.sampleHeard());
+
+        this.audio.addEventListener('durationchange', () => {
+            this.playTracking.setDuration(this.audio.duration);
+        });
+
+        const stopProgress = () => {
+            this.sampleHeard();
+            this.trackingAdvancing = false;
+            this.playTracking.stopProgress();
+        };
+
+        this.audio.addEventListener('pause', stopProgress);
+        this.audio.addEventListener('waiting', stopProgress);
+        this.audio.addEventListener('error', stopProgress);
+
+        this.audio.addEventListener('seeking', () => {
+            this.trackingSeeking = true;
+            this.playTracking.stopProgress();
+        });
+
+        this.audio.addEventListener('seeked', () => {
+            this.trackingSeeking = false;
+            if (this.trackingAdvancing && !this.audio.paused) {
+                this.resumeTrackingProgress();
+            }
+        });
+
+        this.audio.addEventListener('ended', () => this.finishTracking());
     }
 
     private async loadCover(track: TrackRow, version: number): Promise<void> {

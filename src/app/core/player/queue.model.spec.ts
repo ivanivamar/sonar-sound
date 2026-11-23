@@ -1,4 +1,10 @@
-import { adjacentEntryIndex, createQueue, moveEntry, selectEntry } from './queue.model';
+import {
+    adjacentEntryIndex,
+    createQueue,
+    moveEntry,
+    selectEntry,
+    toggleShuffle,
+} from './queue.model';
 
 describe('createQueue', () => {
     it('creates an empty queue', () => {
@@ -125,5 +131,81 @@ describe('adjacentEntryIndex', () => {
 
     it('has no adjacent entry in an empty queue', () => {
         expect(adjacentEntryIndex(createQueue([], -1), 'next', true)).toBeNull();
+    });
+});
+
+describe('toggleShuffle', () => {
+    it('shuffles only upcoming entries and preserves every queue occurrence', () => {
+        const queue = createQueue(
+            [
+                { entryId: 'a', trackId: 'song-a' },
+                { entryId: 'b', trackId: 'song-a' },
+                { entryId: 'c', trackId: 'song-c' },
+                { entryId: 'd', trackId: 'song-d' },
+                { entryId: 'e', trackId: 'song-e' },
+            ],
+            1,
+        );
+        const originalIds = queue.entries.map((entry) => entry.entryId);
+
+        const shuffled = toggleShuffle(queue, () => 0);
+        const shuffledIds = shuffled.entries.map((entry) => entry.entryId);
+
+        expect(shuffled.shuffle).toBe(true);
+        expect(shuffled.originalOrder).toEqual(originalIds);
+        expect(shuffled.entries[shuffled.currentIndex].entryId).toBe('b');
+        expect(shuffledIds.slice(0, 2)).toEqual(originalIds.slice(0, 2));
+        expect([...shuffledIds].sort()).toEqual([...originalIds].sort());
+        expect(shuffled.entries[0].trackId).toBe(shuffled.entries[1].trackId);
+        expect(new Set(shuffledIds).size).toBe(originalIds.length);
+    });
+
+    it('restores original order and keeps the selected occurrence current', () => {
+        const queue = createQueue(
+            [
+                { entryId: 'a', trackId: 'song-a' },
+                { entryId: 'b', trackId: 'song-b' },
+                { entryId: 'c', trackId: 'song-c' },
+                { entryId: 'd', trackId: 'song-d' },
+            ],
+            0,
+        );
+        const originalIds = queue.entries.map((entry) => entry.entryId);
+        const shuffled = toggleShuffle(queue, () => 0);
+        const selectedId = shuffled.entries[2].entryId;
+
+        const restored = toggleShuffle(selectEntry(shuffled, selectedId));
+
+        expect(restored.shuffle).toBe(false);
+        expect(restored.originalOrder).toBeNull();
+        expect(restored.entries.map((entry) => entry.entryId)).toEqual(originalIds);
+        expect(restored.entries[restored.currentIndex].entryId).toBe(selectedId);
+    });
+
+    it('handles empty and one-entry queues', () => {
+        const empty = createQueue([], -1);
+        expect(toggleShuffle(empty)).toBe(empty);
+
+        const oneEntry = createQueue([{ entryId: 'only', trackId: 'song-a' }], 0);
+        const shuffled = toggleShuffle(oneEntry, () => 0);
+
+        expect(shuffled.shuffle).toBe(true);
+        expect(shuffled.entries.map((entry) => entry.entryId)).toEqual(['only']);
+        expect(toggleShuffle(shuffled).shuffle).toBe(false);
+    });
+
+    it('rejects invalid random values', () => {
+        const queue = createQueue(
+            [
+                { entryId: 'a', trackId: 'song-a' },
+                { entryId: 'b', trackId: 'song-b' },
+                { entryId: 'c', trackId: 'song-c' },
+            ],
+            0,
+        );
+
+        expect(() => toggleShuffle(queue, () => 1)).toThrow(
+            'Random value must be between 0 and 1.',
+        );
     });
 });

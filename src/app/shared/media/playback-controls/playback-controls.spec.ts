@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PlayerService, RepeatMode } from '../../../core/player/player.service';
 import { TrackRow } from '../../../core/library/library-file.model';
 import { PlaybackControls } from './playback-controls';
+import { QueueState } from '../../../core/player/queue.model';
 
 describe('PlaybackControls', () => {
     let fixture: ComponentFixture<PlaybackControls>;
@@ -13,6 +14,13 @@ describe('PlaybackControls', () => {
     const nextTrack = vi.fn();
     const repeat = signal(RepeatMode.Off);
     const toggleRepeat = vi.fn();
+    const queueState = signal<QueueState>({
+        entries: [],
+        currentIndex: -1,
+        shuffle: false,
+        originalOrder: null,
+    });
+    const toggleShuffle = vi.fn();
 
     beforeEach(async () => {
         currentTrack.set(null);
@@ -22,6 +30,13 @@ describe('PlaybackControls', () => {
         nextTrack.mockReset().mockResolvedValue(undefined);
         toggleRepeat.mockReset();
         repeat.set(RepeatMode.Off);
+        queueState.set({
+            entries: [],
+            currentIndex: -1,
+            shuffle: false,
+            originalOrder: null,
+        });
+        toggleShuffle.mockReset();
 
         await TestBed.configureTestingModule({
             imports: [PlaybackControls],
@@ -37,6 +52,8 @@ describe('PlaybackControls', () => {
                         previousTrack,
                         repeat,
                         toggleRepeat,
+                        state: queueState,
+                        toggleShuffle,
                     },
                 },
             ],

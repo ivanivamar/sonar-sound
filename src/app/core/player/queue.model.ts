@@ -81,3 +81,60 @@ export function adjacentEntryIndex(
     if (!wrap) return null;
     return direction === 'next' ? 0 : state.entries.length - 1;
 }
+
+export function toggleShuffle(state: QueueState, random: () => number = Math.random): QueueState {
+    if (state.entries.length === 0) return state;
+
+    const currentEntryId = state.entries[state.currentIndex].entryId;
+
+    if (state.shuffle) {
+        const originalOrder = state.originalOrder;
+        if (
+            !originalOrder ||
+            originalOrder.length !== state.entries.length ||
+            new Set(originalOrder).size !== state.entries.length
+        ) {
+            throw new Error('Shuffled queue has an invalid original order.');
+        }
+
+        const entriesById = new Map(state.entries.map((entry) => [entry.entryId, entry]));
+        const entries: QueueEntry[] = [];
+
+        for (const entryId of originalOrder) {
+            const entry = entriesById.get(entryId);
+            if (!entry) {
+                throw new Error('Original queue entry not found.');
+            }
+            entries.push(entry);
+        }
+
+        return {
+            entries,
+            currentIndex: entries.findIndex((entry) => entry.entryId === currentEntryId),
+            shuffle: false,
+            originalOrder: null,
+        };
+    }
+
+    const originalOrder = state.entries.map((entry) => entry.entryId);
+    const entries = [...state.entries];
+    const upcomingStart = state.currentIndex + 1;
+
+    // Fisher–Yates, restricted to entries after the current track.
+    for (let index = entries.length - 1; index > upcomingStart; index--) {
+        const value = random();
+        if (!Number.isFinite(value) || value < 0 || value >= 1) {
+            throw new RangeError('Random value must be between 0 and 1.');
+        }
+
+        const swapIndex = upcomingStart + Math.floor(value * (index - upcomingStart + 1));
+        [entries[index], entries[swapIndex]] = [entries[swapIndex], entries[index]];
+    }
+
+    return {
+        ...state,
+        entries,
+        shuffle: true,
+        originalOrder,
+    };
+}

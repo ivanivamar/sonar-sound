@@ -42,6 +42,7 @@ button:focus-visible {
     }
 }
 
+.control-secondary.shuffle-active,
 .control-secondary.repeat-active {
-    color: var(--ink-primary);
+    color: rgba(var(--ink-primary), 0.6);
 }

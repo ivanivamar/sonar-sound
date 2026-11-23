@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { PlayerService, RepeatMode } from '../../../core/player/player.service';
 import { Ripple } from '../../directives/ripple';
+import { QueueService } from '../../../core/player/queue.service';
 
 @Component({
     imports: [Ripple],
@@ -10,12 +11,14 @@ import { Ripple } from '../../directives/ripple';
 })
 export class PlaybackControls {
     protected readonly playerService = inject(PlayerService);
+    protected readonly queueService = inject(QueueService);
 
     protected readonly playIcon = computed(() => {
         if (this.playerService.isBuffering()) return 'autorenew';
         return this.playerService.isPlaying() ? 'pause' : 'play_arrow';
     });
     protected readonly controlError = signal<string | null>(null);
+    protected readonly shuffleActive = computed(() => this.queueService.state().shuffle);
 
     protected toggle(event: Event): void {
         // The mini player toggles the full-screen player when clicked.
@@ -68,4 +71,13 @@ export class PlaybackControls {
                 return 'Repeat off';
         }
     });
+
+    protected readonly shuffleLabel = computed(() =>
+        this.shuffleActive() ? 'Shuffle on' : 'Shuffle off',
+    );
+
+    protected toggleShuffle(event: Event): void {
+        event.stopPropagation();
+        this.queueService.toggleShuffle();
+    }
 }

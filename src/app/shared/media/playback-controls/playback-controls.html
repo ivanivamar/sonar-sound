@@ -1,4 +1,11 @@
-<button class="button-icon btn-text control-secondary" disabled aria-label="Shuffle">
+<button
+    class="button-icon btn-text control-secondary"
+    [class.shuffle-active]="shuffleActive()"
+    [disabled]="!playerService.currentTrack()"
+    [attr.aria-label]="shuffleLabel()"
+    [attr.aria-pressed]="shuffleActive()"
+    (click)="toggleShuffle($event)"
+>
     <i class="material-symbols-rounded" aria-hidden="true">shuffle</i>
 </button>
 <button

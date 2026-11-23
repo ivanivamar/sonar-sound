@@ -20,12 +20,16 @@ import { CoverColor } from '../cover/cover-color';
 import { trackCoverId } from '../cover/cover-id';
 import { AuthService } from '../auth/auth.service';
 import { MediaSessionService } from './media-session.service';
+import { QueueService } from './queue.service';
+import { adjacentEntryIndex } from './queue.model';
 
 export enum RepeatMode {
     Off,
     One,
     All,
 }
+
+const PREVIOUS_RESTART_THRESHOLD_SECONDS = 3;
 
 @Service()
 export class PlayerService {
@@ -38,6 +42,7 @@ export class PlayerService {
     private readonly mediaSession = inject(MediaSessionService);
     private readonly playTracking = inject(PlayTrackingService);
     private readonly playHistory = inject(PlayHistoryService);
+    private readonly queue = inject(QueueService);
 
     // Signals and state variables for the player.
     private readonly _currentTrack = signal<TrackRow | null>(null);
@@ -89,10 +94,7 @@ export class PlayerService {
             this._isPlaying.set(false);
             this.mediaSession.setPlaybackState('paused');
         });
-        this.audio.addEventListener('ended', () => {
-            this._isPlaying.set(false);
-            this.mediaSession.setPlaybackState('paused');
-        });
+        this.audio.addEventListener('ended', () => this.handleTrackEnded());
         this.audio.addEventListener('timeupdate', () => {
             this._position.set(this.audio.currentTime);
             this.mediaSession.updatePosition(this.audio);
@@ -122,7 +124,7 @@ export class PlayerService {
                 if (!track || this.loading()) return;
 
                 if (!this.sourceReady) {
-                    void this.playTrack(track);
+                    void this.loadTrack(track);
                 } else if (this.audio.paused) {
                     void this.play();
                 }
@@ -135,6 +137,22 @@ export class PlayerService {
                 if (!this.sourceReady || !Number.isFinite(duration) || duration <= 0) return;
                 this.seek(Math.min(duration, Math.max(0, time)));
             },
+            next: () => {
+                void this.nextTrack().catch((error: unknown) => {
+                    this._error.set(
+                        error instanceof Error ? error.message : 'Could not play the next track.',
+                    );
+                });
+            },
+            previous: () => {
+                void this.previousTrack().catch((error: unknown) => {
+                    this._error.set(
+                        error instanceof Error
+                            ? error.message
+                            : 'Could not play the previous track.',
+                    );
+                });
+            },
         });
 
         this.attachPlayTracking();
@@ -143,6 +161,7 @@ export class PlayerService {
             if (!this.authService.isSignedIn()) {
                 untracked(() => {
                     if (this._currentTrack()) this.reset();
+                    this.queue.replace([], -1);
                     this.playHistory.clear();
                 });
             }
@@ -150,6 +169,12 @@ export class PlayerService {
     }
 
     async playTrack(track: TrackRow): Promise<void> {
+        this.queue.replace([{ entryId: crypto.randomUUID(), trackId: track.id }], 0);
+
+        await this.loadTrack(track);
+    }
+
+    private async loadTrack(track: TrackRow): Promise<void> {
         this.releaseAudio();
         const version = this.loadVersion;
 
@@ -213,7 +238,7 @@ export class PlayerService {
         if (!track || this.loading()) return;
 
         if (!this.sourceReady) {
-            void this.playTrack(track);
+            void this.loadTrack(track);
         } else if (this.audio.paused) {
             void this.play();
         } else {
@@ -247,6 +272,63 @@ export class PlayerService {
                   ? RepeatMode.All
                   : RepeatMode.Off,
         );
+    }
+
+    async playQueue(trackIds: readonly string[], startIndex: number): Promise<void> {
+        if (!Number.isInteger(startIndex) || startIndex < 0 || startIndex >= trackIds.length) {
+            throw new RangeError('Invalid starting track.');
+        }
+
+        const track = this.libraryService.getTrackRowById(trackIds[startIndex]);
+        if (!track) {
+            throw new Error('The selected track is not available in the library.');
+        }
+
+        const entries = trackIds.map((trackId) => ({
+            entryId: crypto.randomUUID(),
+            trackId,
+        }));
+
+        this.queue.replace(entries, startIndex);
+        await this.loadTrack(track);
+    }
+
+    async playQueueEntry(entryId: string): Promise<void> {
+        const entry = this.queue.state().entries.find((item) => item.entryId === entryId);
+        if (!entry) {
+            throw new Error('Queue entry not found.');
+        }
+
+        const track = this.libraryService.getTrackRowById(entry.trackId);
+        if (!track) {
+            throw new Error('The selected track is not available in the library.');
+        }
+
+        this.queue.select(entryId);
+        await this.loadTrack(track);
+    }
+
+    async nextTrack(): Promise<void> {
+        const state = this.queue.state();
+        const index = adjacentEntryIndex(state, 'next', this.repeat() === RepeatMode.All);
+
+        if (index === null) return;
+
+        await this.playQueueEntry(state.entries[index].entryId);
+    }
+
+    async previousTrack(): Promise<void> {
+        if (this.audio.currentTime > PREVIOUS_RESTART_THRESHOLD_SECONDS) {
+            this.seek(0);
+            return;
+        }
+
+        const state = this.queue.state();
+        const index = adjacentEntryIndex(state, 'previous', this.repeat() === RepeatMode.All);
+
+        if (index === null) return;
+
+        await this.playQueueEntry(state.entries[index].entryId);
     }
 
     /** Stops playback, cancels any pending load and clears all track state. */
@@ -349,8 +431,6 @@ export class PlayerService {
                 this.resumeTrackingProgress();
             }
         });
-
-        this.audio.addEventListener('ended', () => this.finishTracking());
     }
 
     private async loadCover(track: TrackRow, version: number): Promise<void> {
@@ -376,6 +456,30 @@ export class PlayerService {
         } catch {
             // The colour is optional; the cover and playback continue without it.
         }
+    }
+
+    private handleTrackEnded(): void {
+        this._isPlaying.set(false);
+        this.mediaSession.setPlaybackState('paused');
+
+        // Finish counting this playback before a new track can start.
+        this.finishTracking();
+
+        const state = this.queue.state();
+        if (state.currentIndex === -1) return;
+
+        const nextIndex =
+            this.repeat() === RepeatMode.One
+                ? state.currentIndex
+                : adjacentEntryIndex(state, 'next', this.repeat() === RepeatMode.All);
+
+        if (nextIndex === null) return;
+
+        void this.playQueueEntry(state.entries[nextIndex].entryId).catch((error: unknown) => {
+            this._error.set(
+                error instanceof Error ? error.message : 'Could not play the next track.',
+            );
+        });
     }
 
     private initializeAtmosphere(): void {

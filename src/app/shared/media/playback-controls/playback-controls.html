@@ -1,7 +1,12 @@
 <button class="button-icon btn-text control-secondary" disabled aria-label="Shuffle">
     <i class="material-symbols-rounded" aria-hidden="true">shuffle</i>
 </button>
-<button class="button-icon btn-text control-secondary" disabled aria-label="Previous track">
+<button
+    class="button-icon btn-text control-secondary"
+    [disabled]="!playerService.currentTrack()"
+    aria-label="Previous track"
+    (click)="previous($event)"
+>
     <i class="material-symbols-rounded" aria-hidden="true">skip_previous</i>
 </button>
 <button
@@ -20,9 +25,24 @@
         {{ playIcon() }}
     </i>
 </button>
-<button class="button-icon btn-text control-secondary" disabled aria-label="Next track">
+<button
+    class="button-icon btn-text control-secondary"
+    [disabled]="!playerService.currentTrack()"
+    aria-label="Next track"
+    (click)="next($event)"
+>
     <i class="material-symbols-rounded" aria-hidden="true">skip_next</i>
 </button>
-<button class="button-icon btn-text control-secondary" disabled aria-label="Repeat">
-    <i class="material-symbols-rounded" aria-hidden="true">repeat</i>
+<button
+    class="button-icon btn-text control-secondary"
+    [class.repeat-active]="repeatActive()"
+    [disabled]="!playerService.currentTrack()"
+    [attr.aria-label]="repeatLabel()"
+    [attr.aria-pressed]="repeatActive()"
+    (click)="toggleRepeat($event)"
+>
+    <i class="material-symbols-rounded" aria-hidden="true">{{ repeatIcon() }}</i>
 </button>
+@if (controlError(); as error) {
+    <span role="alert">{{ error }}</span>
+}

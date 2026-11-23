@@ -9,6 +9,9 @@
     (click)="playFromRow($event)"
     (keydown)="playFromKeyboard($event)"
 >
+    @if (queueError(); as error) {
+        <span role="alert">{{ error }}</span>
+    }
     <div class="lead-wrapper">
         <div class="track-number">
             {{ track()?.track }}

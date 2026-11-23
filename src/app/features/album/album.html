@@ -32,11 +32,11 @@
                                 >
                             </div>
                             <span class="album-track-count">
-                                {{ album()?.trackCount ?? 0 }} tracks<span class="album-duration"
-                                    >@if (totalDuration() !== null) {
+                                {{ album()?.trackCount ?? 0 }} tracks<span class="album-duration">
+                                    @if (totalDuration() !== null) {
                                         · {{ totalDuration() | duration }}
-                                    }</span
-                                >
+                                    }
+                                </span>
                             </span>
                         </div>
                     </div>
@@ -54,6 +54,7 @@
                         <app-track-card
                             class="album-track"
                             [track]="track"
+                            [queueTrackIds]="trackIds()"
                             [showArtist]="false"
                             [showAlbum]="false"
                         ></app-track-card>

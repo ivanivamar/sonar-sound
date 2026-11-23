@@ -7,6 +7,8 @@ interface MediaSessionActions {
     play: () => void;
     pause: () => void;
     seek: (time: number) => void;
+    next: () => void;
+    previous: () => void;
 }
 
 @Service()
@@ -20,20 +22,13 @@ export class MediaSessionService {
         navigator.mediaSession.setActionHandler('play', actions.play);
         navigator.mediaSession.setActionHandler('pause', actions.pause);
 
-        try {
-            navigator.mediaSession.setActionHandler('seekto', (details) => {
-                if (typeof details.seekTime === 'number' && Number.isFinite(details.seekTime)) {
-                    actions.seek(details.seekTime);
-                }
-            });
-        } catch (error: unknown) {
-            if (error instanceof TypeError ||
-                (error instanceof DOMException && error.name === 'NotSupportedError')) {
-                console.warn('Media Session seeking is not supported:', error);
-            } else {
-                throw error;
+        this.registerOptionalActionHandler('seekto', (details) => {
+            if (typeof details.seekTime === 'number' && Number.isFinite(details.seekTime)) {
+                actions.seek(details.seekTime);
             }
-        }
+        });
+        this.registerOptionalActionHandler('nexttrack', actions.next);
+        this.registerOptionalActionHandler('previoustrack', actions.previous);
     }
 
     setTrack(track: TrackRow): void {
@@ -67,13 +62,24 @@ export class MediaSessionService {
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = state;
     }
 
-    updatePosition(audio: Pick<HTMLMediaElement, 'duration' | 'currentTime' | 'playbackRate'>): void {
-        if (!('mediaSession' in navigator) ||
-            typeof navigator.mediaSession.setPositionState !== 'function') return;
+    updatePosition(
+        audio: Pick<HTMLMediaElement, 'duration' | 'currentTime' | 'playbackRate'>,
+    ): void {
+        if (
+            !('mediaSession' in navigator) ||
+            typeof navigator.mediaSession.setPositionState !== 'function'
+        )
+            return;
 
         const { duration, currentTime, playbackRate } = audio;
-        if (!Number.isFinite(duration) || duration <= 0 ||
-            !Number.isFinite(currentTime) || !Number.isFinite(playbackRate) || playbackRate <= 0) return;
+        if (
+            !Number.isFinite(duration) ||
+            duration <= 0 ||
+            !Number.isFinite(currentTime) ||
+            !Number.isFinite(playbackRate) ||
+            playbackRate <= 0
+        )
+            return;
 
         navigator.mediaSession.setPositionState({
             duration,
@@ -83,8 +89,10 @@ export class MediaSessionService {
     }
 
     clearPosition(): void {
-        if ('mediaSession' in navigator &&
-            typeof navigator.mediaSession.setPositionState === 'function') {
+        if (
+            'mediaSession' in navigator &&
+            typeof navigator.mediaSession.setPositionState === 'function'
+        ) {
             navigator.mediaSession.setPositionState();
         }
     }
@@ -94,6 +102,25 @@ export class MediaSessionService {
         if ('mediaSession' in navigator) {
             navigator.mediaSession.metadata = null;
             navigator.mediaSession.playbackState = 'none';
+        }
+    }
+
+    private registerOptionalActionHandler(
+        action: MediaSessionAction,
+        handler: MediaSessionActionHandler,
+    ): void {
+        try {
+            navigator.mediaSession.setActionHandler(action, handler);
+        } catch (error: unknown) {
+            if (
+                error instanceof TypeError ||
+                (error instanceof DOMException && error.name === 'NotSupportedError')
+            ) {
+                console.warn(`Media Session ${action} action is not supported:`, error);
+                return;
+            }
+
+            throw error;
         }
     }
 }

@@ -10,6 +10,7 @@ import { LibraryService } from '../library/library.service';
 import { MediaSessionService } from './media-session.service';
 import { PlayerService } from './player.service';
 import { PlayHistoryService } from './play-history.service';
+import { QueueService } from './queue.service';
 
 class FakeMetadata {
     title: string;
@@ -115,7 +116,13 @@ describe('MediaSessionService', () => {
                     provide: CoverColorService,
                     useValue: { getColor: () => of({ hue: 1, chroma: 1 }) },
                 },
-                { provide: LibraryService, useValue: { getAlbumById: () => undefined } },
+                {
+                    provide: LibraryService,
+                    useValue: {
+                        getAlbumById: () => undefined,
+                        getTrackRowById: (id: string) => (id === 'missing' ? undefined : track(id)),
+                    },
+                },
                 { provide: AuthService, useValue: { isSignedIn: signedIn } },
                 {
                     provide: DriveStreamService,
@@ -197,7 +204,13 @@ describe('MediaSessionService', () => {
         vi.stubGlobal('navigator', {});
         const service = TestBed.inject(MediaSessionService);
         expect(() => {
-            service.registerActions({ play: vi.fn(), pause: vi.fn(), seek: vi.fn() });
+            service.registerActions({
+                play: vi.fn(),
+                pause: vi.fn(),
+                seek: vi.fn(),
+                next: vi.fn(),
+                previous: vi.fn(),
+            });
             service.setTrack(track('a'));
             service.updatePosition({ duration: 10, currentTime: 3, playbackRate: 1 });
             service.clearPosition();
@@ -215,7 +228,13 @@ describe('MediaSessionService', () => {
         const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
         const play = vi.fn();
         const pause = vi.fn();
-        TestBed.inject(MediaSessionService).registerActions({ play, pause, seek: vi.fn() });
+        TestBed.inject(MediaSessionService).registerActions({
+            play,
+            pause,
+            seek: vi.fn(),
+            next: vi.fn(),
+            previous: vi.fn(),
+        });
 
         handlers.get('play')?.({ action: 'play' });
         handlers.get('pause')?.({ action: 'pause' });
@@ -389,5 +408,224 @@ describe('MediaSessionService', () => {
         TestBed.tick();
 
         expect(history.plays()).toEqual([]);
+    });
+
+    it('creates a single-track queue and clears it on sign-out', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.playTrack(track('a'));
+        expect(queue.state().entries.map((entry) => entry.trackId)).toEqual(['a']);
+        expect(queue.state().currentIndex).toBe(0);
+
+        await player.playTrack(track('b'));
+        expect(queue.state().entries.map((entry) => entry.trackId)).toEqual(['b']);
+
+        signedIn.set(false);
+        TestBed.tick();
+        expect(queue.state().entries).toEqual([]);
+        expect(queue.state().currentIndex).toBe(-1);
+    });
+
+    it('plays the selected occurrence in a queue', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.playQueue(['a', 'b', 'a'], 2);
+
+        const state = queue.state();
+        expect(state.entries.map((entry) => entry.trackId)).toEqual(['a', 'b', 'a']);
+        expect(new Set(state.entries.map((entry) => entry.entryId)).size).toBe(3);
+        expect(state.currentIndex).toBe(2);
+        expect(player.currentTrack()?.id).toBe('a');
+
+        await expect(player.playQueue(['missing'], 0)).rejects.toThrow();
+        expect(queue.state().entries).toEqual(state.entries);
+    });
+
+    it('plays a specific occurrence without replacing the queue', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.playQueue(['a', 'b', 'a'], 0);
+        const entries = queue.state().entries;
+
+        await player.playQueueEntry(entries[2].entryId);
+
+        expect(queue.state().entries).toEqual(entries);
+        expect(queue.state().currentIndex).toBe(2);
+        expect(player.currentTrack()?.id).toBe('a');
+        expect(FakeAudio.instance.src).toBe('/stream/flac-a');
+    });
+
+    it('preserves playback and selection when an entry or track is missing', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.playQueue(['a', 'missing'], 0);
+        const before = queue.state();
+
+        await expect(player.playQueueEntry('unknown')).rejects.toThrow('Queue entry not found.');
+        await expect(player.playQueueEntry(before.entries[1].entryId)).rejects.toThrow(
+            'The selected track is not available in the library.',
+        );
+
+        expect(queue.state()).toEqual(before);
+        expect(player.currentTrack()?.id).toBe('a');
+        expect(FakeAudio.instance.src).toBe('/stream/flac-a');
+    });
+
+    it('moves to the next occurrence, even with repeat-one enabled', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.playQueue(['a', 'a', 'b'], 0);
+        player.toggleRepeat(); // Off -> One
+
+        await player.nextTrack();
+
+        expect(queue.state().currentIndex).toBe(1);
+        expect(player.currentTrack()?.id).toBe('a');
+    });
+
+    it('stays at the end unless repeat-all is enabled', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.playQueue(['a', 'b'], 1);
+        await player.nextTrack();
+        expect(queue.state().currentIndex).toBe(1);
+
+        player.toggleRepeat(); // Off -> One
+        await player.nextTrack();
+        expect(queue.state().currentIndex).toBe(1);
+
+        player.toggleRepeat(); // One -> All
+        await player.nextTrack();
+        expect(queue.state().currentIndex).toBe(0);
+        expect(player.currentTrack()?.id).toBe('a');
+    });
+
+    it('does nothing for an empty queue and rejects an unavailable next track', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.nextTrack();
+        expect(queue.state().currentIndex).toBe(-1);
+
+        await player.playQueue(['a', 'missing'], 0);
+        await expect(player.nextTrack()).rejects.toThrow(
+            'The selected track is not available in the library.',
+        );
+        expect(queue.state().currentIndex).toBe(0);
+        expect(player.currentTrack()?.id).toBe('a');
+    });
+
+    it('advances on natural end and stops at the end when repeat is off', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.playQueue(['a', 'b'], 0);
+        FakeAudio.instance.paused = true;
+        FakeAudio.instance.dispatchEvent(new Event('ended'));
+
+        await vi.waitFor(() => expect(player.currentTrack()?.id).toBe('b'));
+        expect(queue.state().currentIndex).toBe(1);
+
+        FakeAudio.instance.paused = true;
+        FakeAudio.instance.dispatchEvent(new Event('ended'));
+
+        expect(player.currentTrack()?.id).toBe('b');
+        expect(queue.state().currentIndex).toBe(1);
+        expect(player.isPlaying()).toBe(false);
+    });
+
+    it('wraps to the first entry on natural end when repeat-all is enabled', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.playQueue(['a', 'b'], 1);
+        player.toggleRepeat();
+        player.toggleRepeat(); // Off -> One -> All
+
+        FakeAudio.instance.paused = true;
+        FakeAudio.instance.dispatchEvent(new Event('ended'));
+
+        await vi.waitFor(() => expect(player.currentTrack()?.id).toBe('a'));
+        expect(queue.state().currentIndex).toBe(0);
+    });
+
+    it('replays the current entry on natural end when repeat-one is enabled', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.playQueue(['a', 'b'], 1);
+        const entryId = queue.state().entries[1].entryId;
+        player.toggleRepeat(); // Off -> One
+
+        FakeAudio.instance.paused = true;
+        FakeAudio.instance.dispatchEvent(new Event('ended'));
+
+        await vi.waitFor(() => expect(player.isPlaying()).toBe(true));
+        expect(queue.state().entries[queue.state().currentIndex].entryId).toBe(entryId);
+        expect(player.currentTrack()?.id).toBe('b');
+    });
+
+    it('restarts the current track when Previous is pressed after the threshold', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.playQueue(['a', 'b'], 1);
+        FakeAudio.instance.currentTime = 4;
+
+        await player.previousTrack();
+
+        expect(FakeAudio.instance.currentTime).toBe(0);
+        expect(queue.state().currentIndex).toBe(1);
+        expect(player.currentTrack()?.id).toBe('b');
+    });
+
+    it('selects the previous entry at or before the restart threshold', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.playQueue(['a', 'b'], 1);
+        FakeAudio.instance.currentTime = 3;
+
+        await player.previousTrack();
+
+        expect(queue.state().currentIndex).toBe(0);
+        expect(player.currentTrack()?.id).toBe('a');
+    });
+
+    it('wraps Previous only when repeat-all is enabled', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.playQueue(['a', 'b'], 0);
+        await player.previousTrack();
+        expect(queue.state().currentIndex).toBe(0);
+
+        player.toggleRepeat();
+        player.toggleRepeat(); // Off -> One -> All
+        await player.previousTrack();
+
+        expect(queue.state().currentIndex).toBe(1);
+        expect(player.currentTrack()?.id).toBe('b');
+    });
+
+    it('connects media next and previous actions to queue navigation', async () => {
+        const player = TestBed.inject(PlayerService);
+        const queue = TestBed.inject(QueueService);
+
+        await player.playQueue(['a', 'b'], 0);
+
+        handlers.get('nexttrack')?.({ action: 'nexttrack' });
+        await vi.waitFor(() => expect(player.currentTrack()?.id).toBe('b'));
+        expect(queue.state().currentIndex).toBe(1);
+
+        handlers.get('previoustrack')?.({ action: 'previoustrack' });
+        await vi.waitFor(() => expect(player.currentTrack()?.id).toBe('a'));
+        expect(queue.state().currentIndex).toBe(0);
     });
 });

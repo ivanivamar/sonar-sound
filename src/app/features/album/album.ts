@@ -33,7 +33,9 @@ export class Album {
         { label: 'Albums', url: '/library/albums' },
     ]);
 
-    readonly album = computed<AlbumFile | undefined>(() => this.libraryService.getAlbumById(this.id()));
+    readonly album = computed<AlbumFile | undefined>(() =>
+        this.libraryService.getAlbumById(this.id()),
+    );
     readonly artist = computed(() => {
         const artistId = this.album()?.artistId;
         return artistId ? this.libraryService.getArtistById(artistId) : undefined;
@@ -41,7 +43,9 @@ export class Album {
 
     protected readonly extractedColor = signal<CoverColor | null>(null);
     // The library's precomputed colour wins; otherwise the cover is sampled.
-    protected readonly coverColor = computed(() => this.album()?.coverColor ?? this.extractedColor());
+    protected readonly coverColor = computed(
+        () => this.album()?.coverColor ?? this.extractedColor(),
+    );
 
     protected readonly artistCoverResource = rxResource({
         params: () => artistCoverId(this.artist()) ?? undefined,
@@ -51,12 +55,18 @@ export class Album {
         this.artistCoverResource.hasValue() ? this.artistCoverResource.value() : null,
     );
     readonly tracks = computed<TrackRow[]>(() => {
-        const albumTracks: TrackRow[] = this.libraryService.getAlbumTracks(this.id());
-        return albumTracks.map(track => ({
-            ...track,
-            albumTitle: this.album()?.title ?? '',
-        }));
+        const albumTracks = this.libraryService.getAlbumTracks(this.id());
+
+        return albumTracks
+            .map((track) => ({
+                ...track,
+                albumTitle: this.album()?.title ?? '',
+            }))
+            .sort(
+                (a, b) => (a.track ?? Infinity) - (b.track ?? Infinity) || a.id.localeCompare(b.id),
+            );
     });
+    readonly trackIds = computed(() => this.tracks().map((track) => track.id));
     readonly totalDuration = computed(() => {
         const tracks = this.tracks();
         if (!tracks.length || tracks.length !== this.album()?.trackCount) {
@@ -65,7 +75,11 @@ export class Album {
 
         let total = 0;
         for (const track of tracks) {
-            if (typeof track.duration !== 'number' || !Number.isFinite(track.duration) || track.duration < 0) {
+            if (
+                typeof track.duration !== 'number' ||
+                !Number.isFinite(track.duration) ||
+                track.duration < 0
+            ) {
                 return null;
             }
             total += track.duration;
@@ -79,7 +93,7 @@ export class Album {
             return {
                 x: '15%',
                 y: '35%',
-                hue: color ? String(color.hue) : null,       // null until read: the playing cover's colour
+                hue: color ? String(color.hue) : null, // null until read: the playing cover's colour
                 chroma: color ? String(color.chroma) : null,
             };
         });

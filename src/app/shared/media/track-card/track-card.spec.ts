@@ -6,7 +6,13 @@ import { PlayerService } from '../../../core/player/player.service';
 import { TrackCard } from './track-card';
 
 function makeTrack(id: string): TrackRow {
-    return { id, title: `Track ${id}`, artist: 'Artist', albumId: 'al', artistId: 'ar' } as TrackRow;
+    return {
+        id,
+        title: `Track ${id}`,
+        artist: 'Artist',
+        albumId: 'al',
+        artistId: 'ar',
+    } as TrackRow;
 }
 
 describe('TrackCard', () => {
@@ -16,6 +22,7 @@ describe('TrackCard', () => {
     const isBuffering = signal(false);
     const toggle = vi.fn();
     const playTrack = vi.fn();
+    const playQueue = vi.fn();
 
     const button = () => fixture.nativeElement.querySelector('button') as HTMLButtonElement;
 
@@ -25,6 +32,7 @@ describe('TrackCard', () => {
         isBuffering.set(false);
         toggle.mockReset();
         playTrack.mockReset();
+        playQueue.mockReset().mockResolvedValue(undefined);
 
         await TestBed.configureTestingModule({
             imports: [TrackCard],
@@ -32,7 +40,14 @@ describe('TrackCard', () => {
                 provideRouter([]),
                 {
                     provide: PlayerService,
-                    useValue: { currentTrack, isPlaying, isBuffering, toggle, playTrack },
+                    useValue: {
+                        currentTrack,
+                        isPlaying,
+                        isBuffering,
+                        toggle,
+                        playTrack,
+                        playQueue,
+                    },
                 },
             ],
         }).compileComponents();
@@ -110,5 +125,15 @@ describe('TrackCard', () => {
         await fixture.whenStable();
         expect(button().querySelector('.loading')).not.toBeNull();
         expect(button().getAttribute('aria-busy')).toBe('true');
+    });
+
+    it('plays an album queue starting at the selected track', async () => {
+        fixture.componentRef.setInput('queueTrackIds', ['x', 'a', 'y']);
+        await fixture.whenStable();
+
+        button().click();
+
+        expect(playQueue).toHaveBeenCalledWith(['x', 'a', 'y'], 1);
+        expect(playTrack).not.toHaveBeenCalled();
     });
 });

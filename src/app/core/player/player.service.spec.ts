@@ -92,7 +92,7 @@ describe('PlayerService', () => {
     afterEach(() => vi.unstubAllGlobals());
 
     it('pauses and resumes the current track', async () => {
-        await service.playTrack(makeTrack('a'));
+        await service.loadTrack(makeTrack('a'));
         expect(service.isPlaying()).toBe(true);
 
         service.toggle();
@@ -105,7 +105,7 @@ describe('PlayerService', () => {
 
     it('retries the download when toggling a track that failed to load', async () => {
         downloadBlob.mockReturnValueOnce(throwError(() => new Error('Network down')));
-        await service.playTrack(makeTrack('a'));
+        await service.loadTrack(makeTrack('a'));
 
         expect(service.error()).toBe('Network down');
         expect(service.isBuffering()).toBe(false);
@@ -118,7 +118,7 @@ describe('PlayerService', () => {
     });
 
     it('reports audio element errors', async () => {
-        await service.playTrack(makeTrack('a'));
+        await service.loadTrack(makeTrack('a'));
 
         FakeAudio.instance.error = { message: 'Decode failed' };
         FakeAudio.instance.dispatchEvent(new Event('error'));
@@ -128,7 +128,7 @@ describe('PlayerService', () => {
     });
 
     it('shows buffering while audio waits for data', async () => {
-        await service.playTrack(makeTrack('a'));
+        await service.loadTrack(makeTrack('a'));
         expect(service.isBuffering()).toBe(false);
 
         FakeAudio.instance.dispatchEvent(new Event('waiting'));
@@ -142,8 +142,8 @@ describe('PlayerService', () => {
         const slowDownload = new Subject<Blob>();
         downloadBlob.mockReturnValueOnce(slowDownload);
 
-        const first = service.playTrack(makeTrack('a'));
-        await service.playTrack(makeTrack('b'));
+        const first = service.loadTrack(makeTrack('a'));
+        await service.loadTrack(makeTrack('b'));
         slowDownload.next(new Blob(['late']));
         await first;
 
@@ -151,12 +151,12 @@ describe('PlayerService', () => {
         expect(createObjectURL).toHaveBeenCalledTimes(1);
         expect(service.isPlaying()).toBe(true);
 
-        await service.playTrack(makeTrack('c'));
+        await service.loadTrack(makeTrack('c'));
         expect(revokeObjectURL).toHaveBeenCalledWith('blob:track-1');
     });
 
     it('stops playback and clears state on sign-out', async () => {
-        await service.playTrack(makeTrack('a'));
+        await service.loadTrack(makeTrack('a'));
 
         signedIn.set(false);
         TestBed.tick();
@@ -173,7 +173,7 @@ describe('PlayerService', () => {
         const pending = new Subject<Blob>();
         downloadBlob.mockReturnValueOnce(pending);
 
-        const playing = service.playTrack(makeTrack('a'));
+        const playing = service.loadTrack(makeTrack('a'));
         signedIn.set(false);
         TestBed.tick();
         pending.next(new Blob(['late']));
@@ -184,10 +184,10 @@ describe('PlayerService', () => {
         expect(service.isBuffering()).toBe(false);
     });
 
-    it('uses the album\'s precomputed colour without sampling the cover', async () => {
+    it("uses the album's precomputed colour without sampling the cover", async () => {
         getAlbumById.mockReturnValue({ cover: 'cover-id', coverColor: { hue: 10, chroma: 0.3 } });
 
-        await service.playTrack(makeTrack('a'));
+        await service.loadTrack(makeTrack('a'));
 
         expect(service.coverColor()).toEqual({ hue: 10, chroma: 0.3 });
         expect(getColor).not.toHaveBeenCalled();
@@ -196,7 +196,7 @@ describe('PlayerService', () => {
     it('shows the cover even when colour extraction fails', async () => {
         getColor.mockReturnValue(throwError(() => new Error('canvas blocked')));
 
-        await service.playTrack(makeTrack('a'));
+        await service.loadTrack(makeTrack('a'));
         await Promise.resolve();
 
         expect(service.cover()).toBe('cover-id');

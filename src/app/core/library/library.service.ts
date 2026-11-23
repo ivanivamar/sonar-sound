@@ -15,7 +15,7 @@ export class LibraryService {
     private readonly authService = inject(AuthService);
     private readonly driveService = inject(DriveService);
     private readonly libraryFile = rxResource({
-        params: () => this.authService.isSignedIn() ? true : undefined,
+        params: () => (this.authService.isSignedIn() ? true : undefined),
         stream: () => this.driveService.readJsonByName<LibraryFile>('library.json'),
     });
 
@@ -31,10 +31,12 @@ export class LibraryService {
 
     readonly allCount = computed(() => this.albums().length + this.artists().length);
 
-
     /** All loaded albums as an array; empty until album data is available. */
-    readonly albums = computed(() => Object.values(this.albumsById())
-        .sort((a, b) => new Date(b.addedAt ?? 0).getTime() - new Date(a.addedAt ?? 0).getTime()));
+    readonly albums = computed(() =>
+        Object.values(this.albumsById()).sort(
+            (a, b) => new Date(b.addedAt ?? 0).getTime() - new Date(a.addedAt ?? 0).getTime(),
+        ),
+    );
 
     /** All loaded artists as an array; empty until artist data is available. */
     readonly artists = computed(() => {
@@ -52,8 +54,9 @@ export class LibraryService {
             }
         }
 
-        return [...albumsByArtist.values()].sort((a, b) =>
-            new Date(b.addedAt ?? 0).getTime() - new Date(a.addedAt ?? 0).getTime());
+        return [...albumsByArtist.values()].sort(
+            (a, b) => new Date(b.addedAt ?? 0).getTime() - new Date(a.addedAt ?? 0).getTime(),
+        );
     });
 
     /** All loaded tracks as an array; empty until track data is available. */
@@ -113,8 +116,11 @@ export class LibraryService {
     getArtistAlbums(artistId: string) {
         return Object.values(this.albumsById())
             .filter((album) => album.artistId === artistId)
-            .sort((a, b) => (b.year ?? 0) - (a.year ?? 0)
-                || new Date(b.addedAt ?? 0).getTime() - new Date(a.addedAt ?? 0).getTime());
+            .sort(
+                (a, b) =>
+                    (b.year ?? 0) - (a.year ?? 0) ||
+                    new Date(b.addedAt ?? 0).getTime() - new Date(a.addedAt ?? 0).getTime(),
+            );
     }
 
     /**
@@ -125,5 +131,9 @@ export class LibraryService {
      */
     getArtistTracks(artistId: string) {
         return Object.values(this.tracksById()).filter((track) => track.artistId === artistId);
+    }
+
+    getTrackRowById(trackId: string) {
+        return this.trackRows().find((track) => track.id === trackId);
     }
 }

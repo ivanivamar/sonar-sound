@@ -41,3 +41,7 @@ button:focus-visible {
         box-shadow: none;
     }
 }
+
+.control-secondary.repeat-active {
+    color: var(--ink-primary);
+}

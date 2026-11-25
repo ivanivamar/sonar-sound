@@ -45,6 +45,25 @@
             display: grid;
             grid-template-rows: auto minmax(0, 1fr) auto;
 
+            .navigation-status {
+                position: absolute;
+                z-index: 2;
+                top: 8px;
+                left: 50%;
+                transform: translateX(-50%);
+                pointer-events: none;
+
+                span {
+                    display: block;
+                    padding: 6px 12px;
+                    border: 1px solid var(--hairline-strong);
+                    border-radius: 999px;
+                    background: #171719;
+                    color: #fff;
+                    font-size: 0.875rem;
+                }
+            }
+
             .page-content {
                 min-height: 0;
                 overflow: auto;

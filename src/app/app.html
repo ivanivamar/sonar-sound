@@ -4,6 +4,11 @@
         <section class="shell-panel">
             <app-atmosphere></app-atmosphere>
             <div class="app-content">
+                <div class="navigation-status" role="status">
+                    @if (currentNavigation()) {
+                        <span>Loading page...</span>
+                    }
+                </div>
                 <app-topbar [scrolled]="pageScrolled()"></app-topbar>
                 <div
                     #pageContent

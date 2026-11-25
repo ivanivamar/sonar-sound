@@ -1,0 +1,122 @@
+<section class="queue-content" aria-labelledby="queue-heading">
+    <header class="queue-header">
+        <h2 id="queue-heading">Up next</h2>
+        <span>{{ upcomingCount() }} upcoming</span>
+    </header>
+
+    @if (rows().length === 0) {
+        <p class="queue-empty">The queue is empty.</p>
+    } @else {
+        <ol
+            class="queue-list"
+            #queueList
+            cdkDropList
+            [cdkDropListData]="rows()"
+            [cdkDropListSortingDisabled]="true"
+            (cdkDropListDropped)="drop($event)"
+        >
+            @for (row of rows(); track row.entry.entryId; let index = $index) {
+                @if (
+                    index === 0 ||
+                    (row.status !== rows()[$index - 1].status && row.status !== 'current')
+                ) {
+                    <span class="queue-section">{{ row.status }}</span>
+                }
+
+                <li
+                    cdkDrag
+                    [attr.data-status]="row.status"
+                    [attr.data-entry-id]="row.entry.entryId"
+                    [class.drop-before]="
+                        dropTarget()?.entryId === row.entry.entryId && !dropTarget()?.after
+                    "
+                    [class.drop-after]="
+                        dropTarget()?.entryId === row.entry.entryId && dropTarget()?.after
+                    "
+                    (cdkDragStarted)="startDrag(row.entry.entryId)"
+                    (cdkDragMoved)="moveDrag($event)"
+                >
+                    <button
+                        class="queue-row"
+                        [class.current]="row.status === 'current'"
+                        [class.played]="row.status === 'played'"
+                        [attr.aria-current]="row.status === 'current' ? 'true' : null"
+                        (click)="select(row.entry.entryId)"
+                    >
+                        @if (row.status !== 'current') {
+                            <i
+                                class="queue-grab material-symbols-rounded"
+                                cdkDragHandle
+                                aria-hidden="true"
+                                >drag_handle</i
+                            >
+                        }
+
+                        <app-cover
+                            class="queue-cover"
+                            [cover]="row.track?.cover ?? null"
+                            [name]="row.track?.title ?? null"
+                            [extractColor]="row.status === 'current'"
+                            (colorResolved)="coverColor($event)"
+                        ></app-cover>
+
+                        <span class="queue-track-info">
+                            @if (row.status === 'current') {
+                                <div
+                                    class="current-title"
+                                    [style.--current-color]="currentColor()?.hue ?? 100"
+                                >
+                                    <span class="current-dot"></span>
+                                    <span class="current-title-text">Now Playing</span>
+                                </div>
+                            }
+                            <span class="queue-title">
+                                {{ row.track?.title ?? 'Unavailable track' }}
+                            </span>
+                            <div class="queue-sources">
+                                <a
+                                    (click)="$event.stopPropagation()"
+                                    [routerLink]="['/library/artist/', row.track?.artistId]"
+                                >
+                                    {{ row.track?.artist }}
+                                </a>
+                                ·
+                                <a
+                                    (click)="$event.stopPropagation()"
+                                    [routerLink]="['/library/album/', row.track?.albumId]"
+                                >
+                                    {{ row.track?.albumTitle }}
+                                </a>
+                            </div>
+                        </span>
+
+                        @if (row.track?.duration !== null) {
+                            <span class="queue-duration">{{ row.track?.duration | duration }}</span>
+                        }
+                    </button>
+
+                    <ng-template cdkDragPreview [matchSize]="true">
+                        <div class="queue-drag-preview">
+                            <i class="material-symbols-rounded" aria-hidden="true">drag_handle</i>
+                            <app-cover
+                                class="preview-cover"
+                                [cover]="row.track?.cover ?? null"
+                                [name]="row.track?.title ?? null"
+                            />
+                            <div class="preview-info">
+                                <span class="preview-title">{{
+                                    row.track?.title ?? 'Unavailable track'
+                                }}</span>
+                                <span class="preview-artist">{{ row.track?.artist ?? '' }}</span>
+                            </div>
+                        </div>
+                    </ng-template>
+                </li>
+            }
+        </ol>
+    }
+
+    @if (error(); as message) {
+        <p role="alert">{{ message }}</p>
+    }
+</section>

@@ -25,6 +25,7 @@ export class App {
 
     private readonly authService = inject(AuthService);
     private readonly router = inject(Router);
+    protected readonly currentNavigation = this.router.currentNavigation;
 
     constructor() {
         // Send the user to /auth whenever the session ends (sign-out button, token expiry or a 401).

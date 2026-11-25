@@ -14,11 +14,12 @@ import { PlayerService } from '../../../core/player/player.service';
 import { ViewportService } from '../../../core/viewport/viewport.service';
 import { Atmosphere } from '../../../layout/atmosphere/atmosphere';
 import { Cover } from '../cover/cover';
-import { TabItem, Tabs } from '../../ui/tabs/tabs';
+import { TabItem } from '../../ui/tabs/tabs';
 import { Ripple } from '../../directives/ripple';
 import { Slider } from '../player/slider/slider';
 import { DurationPipe } from '../../pipes/duration-pipe';
 import { PlaybackControls } from '../playback-controls/playback-controls';
+import { QueueContent } from '../queue-content/queue-content';
 
 const TABS: TabItem[] = [
     { title: 'Queue', id: 'queue' },
@@ -26,7 +27,16 @@ const TABS: TabItem[] = [
 ];
 
 @Component({
-    imports: [Atmosphere, Cover, Tabs, Ripple, Slider, DurationPipe, RouterLink, PlaybackControls],
+    imports: [
+        Atmosphere,
+        Cover,
+        Ripple,
+        Slider,
+        DurationPipe,
+        RouterLink,
+        PlaybackControls,
+        QueueContent,
+    ],
     selector: 'app-now-playing',
     styleUrl: './now-playing.scss',
     templateUrl: './now-playing.html',
@@ -69,11 +79,14 @@ export class NowPlaying {
         if (!this.playerService.currentTrack() || this.isOpen()) return;
         this.returnFocusTo = this.document.activeElement as HTMLElement | null;
         this.isOpen.set(true);
-        afterNextRender(() => {
-            if (this.isOpen()) this.dialog().nativeElement.focus();
-        }, {
-            injector: this.injector,
-        });
+        afterNextRender(
+            () => {
+                if (this.isOpen()) this.dialog().nativeElement.focus({ preventScroll: true });
+            },
+            {
+                injector: this.injector,
+            },
+        );
     }
 
     close(): void {

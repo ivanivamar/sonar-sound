@@ -93,15 +93,26 @@
             </div>
         } @else {
             <div class="track-panels">
-                <app-tabs
-                    [tabs]="tabs"
-                    [currentTab]="currentTab()"
-                    (currentTabChange)="currentTab.set($event)"
-                ></app-tabs>
+                <div class="track-shortcuts" role="group" aria-label="Panels">
+                    @for (tab of tabs; track tab.id) {
+                        <button
+                            class="button button-text btn-sm"
+                            appRipple
+                            [class.active]="tab.id === currentTab()"
+                            [attr.aria-pressed]="tab.id === currentTab()"
+                            (click)="currentTab.set(tab.id)"
+                        >
+                            <i class="material-symbols-rounded" aria-hidden="true">
+                                {{ shortcutIcons[tab.id] }}
+                            </i>
+                            {{ tab.title }}
+                        </button>
+                    }
+                </div>
 
                 @switch (currentTab()) {
                     @case ('queue') {
-                        <p>Queue content goes here</p>
+                        <app-queue-content />
                     }
                     @case ('lyrics') {
                         <p>Lyrics content goes here</p>

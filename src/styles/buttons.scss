@@ -68,6 +68,23 @@
         &:hover {
             background: rgba(255, 255, 255, 0.08);
         }
+
+        &.active {
+            background-color: var(--ink-primary);
+            border-color: var(--ink-primary);
+            color: var(--bg-1);
+            box-shadow: 0 0 30px -10px #ffffff73;
+
+            &:hover {
+                box-shadow: var(--glow-primary-hover);
+                background: #fff;
+                transform: translateY(-1px);
+            }
+        }
+    }
+
+    &.btn-sm {
+        min-height: 42px;
     }
 }
 
@@ -127,6 +144,11 @@
             background: rgba(255, 255, 255, 0.08);
         }
     }
+}
+
+.button-group {
+    display: inline-flex;
+    gap: 8px;
 }
 
 a {

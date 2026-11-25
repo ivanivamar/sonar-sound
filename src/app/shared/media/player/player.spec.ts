@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { PlayerService } from '../../../core/player/player.service';
+import { PlayerService, RepeatMode } from '../../../core/player/player.service';
 import { TrackRow } from '../../../core/library/library-file.model';
 import { Player } from './player';
 import { NowPlaying } from '../now-playing/now-playing';
@@ -35,6 +35,7 @@ describe('Player', () => {
                         error,
                         isPlaying: signal(false),
                         isBuffering: signal(false),
+                        repeat: signal(RepeatMode.Off),
                         position: signal(0),
                         duration: signal(0),
                         coverColor: signal(null),
@@ -96,6 +97,27 @@ describe('Player', () => {
         expect(toggle).not.toHaveBeenCalled();
     });
 
+    it('keeps now playing inert until opened from the player and after closing', async () => {
+        currentTrack.set({ id: 'a', title: 'A', artist: 'B', albumId: 'c' } as TrackRow);
+        await fixture.whenStable();
+
+        const element: HTMLElement = fixture.nativeElement;
+        const dialog = element.querySelector<HTMLElement>('[role="dialog"]')!;
+        const footer = element.querySelector<HTMLElement>('footer')!;
+        expect(dialog.hasAttribute('inert')).toBe(true);
+        expect(dialog.classList.contains('open')).toBe(false);
+
+        footer.click();
+        await fixture.whenStable();
+        expect(dialog.hasAttribute('inert')).toBe(false);
+        expect(dialog.classList.contains('open')).toBe(true);
+
+        dialog.querySelector<HTMLButtonElement>('.close-button')!.click();
+        await fixture.whenStable();
+        expect(dialog.hasAttribute('inert')).toBe(true);
+        expect(dialog.classList.contains('open')).toBe(false);
+    });
+
     it('focuses the now-playing dialog so Space controls playback, and restores focus on close', async () => {
         currentTrack.set({ id: 'a', title: 'A', artist: 'B', albumId: 'c' } as TrackRow);
         await fixture.whenStable();
@@ -104,11 +126,13 @@ describe('Player', () => {
         const dialog = fixture.nativeElement.querySelector('[role="dialog"]') as HTMLElement;
         const nowPlaying = fixture.debugElement.query(By.directive(NowPlaying))
             .componentInstance as NowPlaying;
+        const focusDialog = vi.spyOn(dialog, 'focus');
         footer.focus();
 
         nowPlaying.open();
         await fixture.whenStable();
         expect(document.activeElement).toBe(dialog);
+        expect(focusDialog).toHaveBeenCalledWith({ preventScroll: true });
 
         dialog.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
         expect(toggle).toHaveBeenCalledTimes(1);

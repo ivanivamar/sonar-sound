@@ -7,6 +7,7 @@ import { AtmosphereService } from './layout/atmosphere/atmosphere.service';
 import { Topbar } from './layout/topbar/topbar';
 import { CdkVirtualScrollableElement } from '@angular/cdk/scrolling';
 import { Player } from './shared/media/player/player';
+import { QueuePersistence } from './core/player/queue/queue-persistence.service';
 
 @Component({
     selector: 'app-root',
@@ -26,6 +27,8 @@ export class App {
     private readonly authService = inject(AuthService);
     private readonly router = inject(Router);
     protected readonly currentNavigation = this.router.currentNavigation;
+
+    private readonly queuePersistence = inject(QueuePersistence);
 
     constructor() {
         // Send the user to /auth whenever the session ends (sign-out button, token expiry or a 401).

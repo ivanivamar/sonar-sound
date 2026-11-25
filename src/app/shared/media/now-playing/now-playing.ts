@@ -74,7 +74,6 @@ export class NowPlaying {
 
     toggle(): void {
         if (this.isOpen()) {
-            this.sheet()?.hide();
             this.close();
         } else {
             this.open();
@@ -95,10 +94,13 @@ export class NowPlaying {
         );
     }
 
-    close(): void {
+    close(restoreFocus = true): void {
         if (!this.isOpen()) return;
+        this.sheet()?.dismiss();
         this.isOpen.set(false);
-        this.returnFocusTo?.focus();
+        if (restoreFocus || this.dialog().nativeElement.contains(this.document.activeElement)) {
+            this.returnFocusTo?.focus();
+        }
         this.returnFocusTo = null;
     }
 

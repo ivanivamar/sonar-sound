@@ -1,5 +1,5 @@
 <aside class="sidebar">
-    <a href="/" class="sidebar-header">
+    <a href="/" class="sidebar-header" (click)="linkActivated.emit()">
         <img class="sidebar-logo" src="/pelagic-logo.svg" alt="Pelagic" />
         <div class="header-content">
             <span class="header-title">Pelagic</span>
@@ -15,6 +15,7 @@
                 ariaCurrentWhenActive="page"
                 appRipple
                 class="nav-item"
+                (click)="linkActivated.emit()"
             >
                 <i class="material-symbols-rounded nav-item__icon" aria-hidden="true">{{
                     item.icon

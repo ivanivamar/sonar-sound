@@ -1,12 +1,16 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Observable, of, Subject, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService } from '../auth/auth.service';
 import { CoverColorService } from '../cover/cover-color.service';
-import { DriveService } from '../drive/drive.service';
+import { DriveStreamService } from '../drive/drive-stream.service';
 import { TrackRow } from '../library/library-file.model';
 import { LibraryService } from '../library/library.service';
+import { MediaSessionService } from './media-session.service';
+import { PlayHistoryService } from './tracking/play-history.service';
+import { PlayTrackingService } from './tracking/play-tracking.service';
+import { QueueService } from './queue/queue.service';
 import { PlayerService } from './player.service';
 
 class FakeAudio extends EventTarget {
@@ -58,41 +62,71 @@ function makeTrack(id: string): TrackRow {
 
 describe('PlayerService', () => {
     const signedIn = signal(true);
-    const downloadBlob = vi.fn<(id: string) => Observable<Blob>>();
+    const signOutCount = signal(0);
+    const registerStreamWorker = vi.fn<() => Promise<void>>();
+    const createStreamUrl = vi.fn<(file: { id: string }) => string>();
     const getColor = vi.fn();
     const getAlbumById = vi.fn();
     let service: PlayerService;
-    let createObjectURL: ReturnType<typeof vi.fn>;
-    let revokeObjectURL: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
         vi.stubGlobal('Audio', FakeAudio);
-        let urlCount = 0;
-        createObjectURL = vi.fn(() => `blob:track-${++urlCount}`);
-        revokeObjectURL = vi.fn();
-        URL.createObjectURL = createObjectURL as unknown as typeof URL.createObjectURL;
-        URL.revokeObjectURL = revokeObjectURL as unknown as typeof URL.revokeObjectURL;
 
         signedIn.set(true);
-        downloadBlob.mockReset().mockReturnValue(of(new Blob(['audio'])));
+        signOutCount.set(0);
+        registerStreamWorker.mockReset().mockResolvedValue(undefined);
+        createStreamUrl.mockReset().mockImplementation((file) => `stream:${file.id}`);
         getColor.mockReset().mockReturnValue(of({ hue: 200, chroma: 0.5 }));
         getAlbumById.mockReset().mockReturnValue(undefined);
 
         TestBed.configureTestingModule({
             providers: [
-                { provide: AuthService, useValue: { isSignedIn: signedIn.asReadonly() } },
-                { provide: DriveService, useValue: { downloadBlob } },
+                {
+                    provide: AuthService,
+                    useValue: { isSignedIn: signedIn.asReadonly(), signOutCount },
+                },
+                {
+                    provide: DriveStreamService,
+                    useValue: { register: registerStreamWorker, createStreamUrl },
+                },
                 { provide: CoverColorService, useValue: { getColor } },
                 { provide: LibraryService, useValue: { getAlbumById } },
+                {
+                    provide: MediaSessionService,
+                    useValue: {
+                        registerActions: vi.fn(),
+                        setTrack: vi.fn(),
+                        setArtwork: vi.fn(),
+                        setPlaybackState: vi.fn(),
+                        updatePosition: vi.fn(),
+                        clearPosition: vi.fn(),
+                        clear: vi.fn(),
+                    },
+                },
+                {
+                    provide: PlayTrackingService,
+                    useValue: {
+                        start: vi.fn(),
+                        setDuration: vi.fn(),
+                        addHeard: vi.fn(),
+                        clear: vi.fn(),
+                        resumeProgress: vi.fn(),
+                        sampleProgress: vi.fn(),
+                        stopProgress: vi.fn(),
+                    },
+                },
+                { provide: PlayHistoryService, useValue: { clear: vi.fn() } },
+                { provide: QueueService, useValue: { replace: vi.fn() } },
             ],
         });
         service = TestBed.inject(PlayerService);
+        registerStreamWorker.mockClear();
     });
 
     afterEach(() => vi.unstubAllGlobals());
 
     it('pauses and resumes the current track', async () => {
-        await service.loadTrack(makeTrack('a'));
+        await service.playTrack(makeTrack('a'));
         expect(service.isPlaying()).toBe(true);
 
         service.toggle();
@@ -100,12 +134,12 @@ describe('PlayerService', () => {
 
         service.toggle();
         expect(service.isPlaying()).toBe(true);
-        expect(downloadBlob).toHaveBeenCalledTimes(1);
+        expect(registerStreamWorker).toHaveBeenCalledTimes(1);
     });
 
-    it('retries the download when toggling a track that failed to load', async () => {
-        downloadBlob.mockReturnValueOnce(throwError(() => new Error('Network down')));
-        await service.loadTrack(makeTrack('a'));
+    it('retries worker registration when toggling a track that failed to load', async () => {
+        registerStreamWorker.mockRejectedValueOnce(new Error('Network down'));
+        await service.playTrack(makeTrack('a'));
 
         expect(service.error()).toBe('Network down');
         expect(service.isBuffering()).toBe(false);
@@ -113,12 +147,12 @@ describe('PlayerService', () => {
         service.toggle();
         await vi.waitFor(() => expect(service.isPlaying()).toBe(true));
 
-        expect(downloadBlob).toHaveBeenCalledTimes(2);
+        expect(registerStreamWorker).toHaveBeenCalledTimes(2);
         expect(service.error()).toBeNull();
     });
 
     it('reports audio element errors', async () => {
-        await service.loadTrack(makeTrack('a'));
+        await service.playTrack(makeTrack('a'));
 
         FakeAudio.instance.error = { message: 'Decode failed' };
         FakeAudio.instance.dispatchEvent(new Event('error'));
@@ -128,7 +162,7 @@ describe('PlayerService', () => {
     });
 
     it('shows buffering while audio waits for data', async () => {
-        await service.loadTrack(makeTrack('a'));
+        await service.playTrack(makeTrack('a'));
         expect(service.isBuffering()).toBe(false);
 
         FakeAudio.instance.dispatchEvent(new Event('waiting'));
@@ -138,48 +172,51 @@ describe('PlayerService', () => {
         expect(service.isBuffering()).toBe(false);
     });
 
-    it('releases the previous blob and ignores its download when switching tracks', async () => {
-        const slowDownload = new Subject<Blob>();
-        downloadBlob.mockReturnValueOnce(slowDownload);
+    it('ignores a pending stream registration when switching tracks', async () => {
+        let finishRegistration!: () => void;
+        const pendingRegistration = new Promise<void>((resolve) => {
+            finishRegistration = resolve;
+        });
+        registerStreamWorker.mockReturnValueOnce(pendingRegistration);
 
-        const first = service.loadTrack(makeTrack('a'));
-        await service.loadTrack(makeTrack('b'));
-        slowDownload.next(new Blob(['late']));
+        const first = service.playTrack(makeTrack('a'));
+        await service.playTrack(makeTrack('b'));
+        finishRegistration();
         await first;
 
         expect(service.currentTrack()?.id).toBe('b');
-        expect(createObjectURL).toHaveBeenCalledTimes(1);
+        expect(createStreamUrl).toHaveBeenCalledTimes(1);
+        expect(createStreamUrl).toHaveBeenCalledWith(makeTrack('b').flac);
         expect(service.isPlaying()).toBe(true);
-
-        await service.loadTrack(makeTrack('c'));
-        expect(revokeObjectURL).toHaveBeenCalledWith('blob:track-1');
     });
 
     it('stops playback and clears state on sign-out', async () => {
-        await service.loadTrack(makeTrack('a'));
+        await service.playTrack(makeTrack('a'));
 
         signedIn.set(false);
         TestBed.tick();
 
         expect(FakeAudio.instance.paused).toBe(true);
         expect(FakeAudio.instance.src).toBe('');
-        expect(revokeObjectURL).toHaveBeenCalledWith('blob:track-1');
         expect(service.currentTrack()).toBeNull();
         expect(service.isPlaying()).toBe(false);
         expect(service.cover()).toBeNull();
     });
 
-    it('discards a pending download on sign-out', async () => {
-        const pending = new Subject<Blob>();
-        downloadBlob.mockReturnValueOnce(pending);
+    it('discards a pending stream registration on sign-out', async () => {
+        let finishRegistration!: () => void;
+        const pendingRegistration = new Promise<void>((resolve) => {
+            finishRegistration = resolve;
+        });
+        registerStreamWorker.mockReturnValueOnce(pendingRegistration);
 
-        const playing = service.loadTrack(makeTrack('a'));
+        const playing = service.playTrack(makeTrack('a'));
         signedIn.set(false);
         TestBed.tick();
-        pending.next(new Blob(['late']));
+        finishRegistration();
         await playing;
 
-        expect(createObjectURL).not.toHaveBeenCalled();
+        expect(createStreamUrl).not.toHaveBeenCalled();
         expect(service.currentTrack()).toBeNull();
         expect(service.isBuffering()).toBe(false);
     });
@@ -187,7 +224,7 @@ describe('PlayerService', () => {
     it("uses the album's precomputed colour without sampling the cover", async () => {
         getAlbumById.mockReturnValue({ cover: 'cover-id', coverColor: { hue: 10, chroma: 0.3 } });
 
-        await service.loadTrack(makeTrack('a'));
+        await service.playTrack(makeTrack('a'));
 
         expect(service.coverColor()).toEqual({ hue: 10, chroma: 0.3 });
         expect(getColor).not.toHaveBeenCalled();
@@ -196,7 +233,7 @@ describe('PlayerService', () => {
     it('shows the cover even when colour extraction fails', async () => {
         getColor.mockReturnValue(throwError(() => new Error('canvas blocked')));
 
-        await service.loadTrack(makeTrack('a'));
+        await service.playTrack(makeTrack('a'));
         await Promise.resolve();
 
         expect(service.cover()).toBe('cover-id');

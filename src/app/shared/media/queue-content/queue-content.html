@@ -76,14 +76,14 @@
                             </span>
                             <div class="queue-sources">
                                 <a
-                                    (click)="$event.stopPropagation()"
+                                    (click)="activateLink($event)"
                                     [routerLink]="['/library/artist/', row.track?.artistId]"
                                 >
                                     {{ row.track?.artist }}
                                 </a>
                                 ·
                                 <a
-                                    (click)="$event.stopPropagation()"
+                                    (click)="activateLink($event)"
                                     [routerLink]="['/library/album/', row.track?.albumId]"
                                 >
                                     {{ row.track?.albumTitle }}

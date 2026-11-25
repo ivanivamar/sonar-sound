@@ -35,6 +35,7 @@ describe('QueueService', () => {
         queue.toggleShuffle();
 
         expect(queue.state().shuffle).toBe(true);
+        expect(queue.state().currentIndex).toBe(0);
         expect(queue.state().entries[queue.state().currentIndex].entryId).toBe('b');
 
         queue.toggleShuffle();
@@ -68,6 +69,7 @@ describe('QueueService', () => {
 
         expect(state.shuffle).toBe(true);
         expect(state.originalOrder).toEqual(['new-a', 'new-b', 'new-c']);
+        expect(state.currentIndex).toBe(0);
         expect(state.entries[state.currentIndex].entryId).toBe('new-b');
         expect(ids).toHaveLength(3);
         expect(new Set(ids)).toEqual(new Set(['new-a', 'new-b', 'new-c']));
@@ -84,5 +86,23 @@ describe('QueueService', () => {
 
         expect(queue.state().shuffle).toBe(false);
         expect(queue.state().originalOrder).toBeNull();
+    });
+
+    it('restores a prepared state without changing entry IDs or shuffle', () => {
+        const state = {
+            entries: [
+                { entryId: 'e1', trackId: 't1' },
+                { entryId: 'e2', trackId: 't2' },
+            ],
+            currentIndex: 1,
+            shuffle: true,
+            originalOrder: ['e2', 'e1'],
+        };
+
+        const service = TestBed.inject(QueueService);
+
+        service.restore(state);
+
+        expect(service.state()).toEqual(state);
     });
 });

@@ -135,7 +135,7 @@ describe('adjacentEntryIndex', () => {
 });
 
 describe('toggleShuffle', () => {
-    it('shuffles only upcoming entries and preserves every queue occurrence', () => {
+    it('puts the current occurrence first and shuffles both played and upcoming entries', () => {
         const queue = createQueue(
             [
                 { entryId: 'a', trackId: 'song-a' },
@@ -153,11 +153,32 @@ describe('toggleShuffle', () => {
 
         expect(shuffled.shuffle).toBe(true);
         expect(shuffled.originalOrder).toEqual(originalIds);
-        expect(shuffled.entries[shuffled.currentIndex].entryId).toBe('b');
-        expect(shuffledIds.slice(0, 2)).toEqual(originalIds.slice(0, 2));
+        expect(shuffled.currentIndex).toBe(0);
+        expect(shuffledIds).toEqual(['b', 'c', 'd', 'e', 'a']);
         expect([...shuffledIds].sort()).toEqual([...originalIds].sort());
-        expect(shuffled.entries[0].trackId).toBe(shuffled.entries[1].trackId);
+        expect(shuffled.entries[0].trackId).toBe(shuffled.entries[4].trackId);
         expect(new Set(shuffledIds).size).toBe(originalIds.length);
+        expect(queue.entries.map((entry) => entry.entryId)).toEqual(originalIds);
+        expect(queue.currentIndex).toBe(1);
+    });
+
+    it('shuffles previously played entries when the current entry was last', () => {
+        const queue = createQueue(
+            [
+                { entryId: 'a', trackId: 'song-a' },
+                { entryId: 'b', trackId: 'song-b' },
+                { entryId: 'c', trackId: 'song-c' },
+            ],
+            2,
+        );
+
+        const shuffled = toggleShuffle(queue, () => 0);
+
+        expect(shuffled.entries.map((entry) => entry.entryId)).toEqual(['c', 'b', 'a']);
+        expect(shuffled.currentIndex).toBe(0);
+        const restored = toggleShuffle(shuffled);
+        expect(restored.entries).toEqual(queue.entries);
+        expect(restored.currentIndex).toBe(2);
     });
 
     it('restores original order and keeps the selected occurrence current', () => {

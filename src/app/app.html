@@ -1,6 +1,6 @@
 <main class="app-shell" [class.signed-in]="authService.isSignedIn()">
     @if (authService.isSignedIn()) {
-        <app-sidebar></app-sidebar>
+        <app-sidebar (linkActivated)="player.closeNowPlaying(false)"></app-sidebar>
         <section class="shell-panel">
             <app-atmosphere></app-atmosphere>
             <div class="app-content">
@@ -18,7 +18,7 @@
                 >
                     <router-outlet (activate)="updatePageScroll(pageContent.scrollTop)" />
                 </div>
-                <app-player></app-player>
+                <app-player #player></app-player>
             </div>
         </section>
     } @else {

@@ -11,6 +11,7 @@ describe('Albums', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(Albums);
+        fixture.componentRef.setInput('albums', []);
         component = fixture.componentInstance;
         await fixture.whenStable();
     });

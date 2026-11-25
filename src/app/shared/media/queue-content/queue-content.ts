@@ -1,9 +1,9 @@
-import { Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, ElementRef, inject, output, signal, viewChild } from '@angular/core';
 import { TrackRow } from '../../../core/library/library-file.model';
-import { QueueEntry } from '../../../core/player/queue.model';
+import { QueueEntry } from '../../../core/player/queue/queue.model';
 import { LibraryService } from '../../../core/library/library.service';
 import { PlayerService } from '../../../core/player/player.service';
-import { QueueService } from '../../../core/player/queue.service';
+import { QueueService } from '../../../core/player/queue/queue.service';
 import { Cover } from '../cover/cover';
 import { DurationPipe } from '../../pipes/duration-pipe';
 import { RouterLink } from '@angular/router';
@@ -16,7 +16,6 @@ import {
     CdkDragPreview,
     CdkDragMove,
 } from '@angular/cdk/drag-drop';
-import { PopupPosition } from '../../directives/popup-position';
 
 type QueueRowStatus = 'played' | 'current' | 'upcoming';
 
@@ -28,21 +27,13 @@ interface QueueRow {
 }
 
 @Component({
-    imports: [
-        Cover,
-        DurationPipe,
-        RouterLink,
-        CdkDrag,
-        CdkDragHandle,
-        CdkDropList,
-        CdkDragPreview,
-        PopupPosition,
-    ],
+    imports: [Cover, DurationPipe, RouterLink, CdkDrag, CdkDragHandle, CdkDropList, CdkDragPreview],
     selector: 'app-queue-content',
     styleUrl: './queue-content.scss',
     templateUrl: './queue-content.html',
 })
 export class QueueContent {
+    readonly linkActivated = output<void>();
     private readonly queueService = inject(QueueService);
     private readonly libraryService = inject(LibraryService);
     private readonly playerService = inject(PlayerService);
@@ -100,6 +91,11 @@ export class QueueContent {
                 error instanceof Error ? error.message : 'Could not play this queue entry.',
             );
         });
+    }
+
+    protected activateLink(event: MouseEvent): void {
+        event.stopPropagation();
+        this.linkActivated.emit();
     }
 
     protected startDrag(entryId: string): void {

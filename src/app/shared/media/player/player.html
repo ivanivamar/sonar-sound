@@ -3,7 +3,6 @@
     (click)="onFooterClick($event)"
     (keydown)="onFooterKeydown($event)"
     tabindex="0"
-    appRipple
 >
     <div class="player-slider-wrapper">
         <app-slider
@@ -47,6 +46,7 @@
                         <a
                             [routerLink]="['/library/album/', currentTrack()?.albumId]"
                             class="track-album"
+                            (click)="closeNowPlaying()"
                         >
                             {{ currentTrack()?.albumTitle }}
                         </a>

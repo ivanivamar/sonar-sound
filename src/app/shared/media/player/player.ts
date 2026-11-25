@@ -6,10 +6,9 @@ import { Slider } from './slider/slider';
 import { DurationPipe } from '../../pipes/duration-pipe';
 import { NowPlaying } from '../now-playing/now-playing';
 import { PlaybackControls } from '../playback-controls/playback-controls';
-import { Ripple } from '../../directives/ripple';
 
 @Component({
-    imports: [Cover, RouterLink, Slider, DurationPipe, NowPlaying, PlaybackControls, Ripple],
+    imports: [Cover, RouterLink, Slider, DurationPipe, NowPlaying, PlaybackControls],
     selector: 'app-player',
     styleUrl: './player.scss',
     templateUrl: './player.html',
@@ -33,13 +32,29 @@ export class Player {
         this.playerService.seek(position);
     }
 
+    closeNowPlaying(restoreFocus = true): void {
+        this.nowPlaying().close(restoreFocus);
+    }
+
     onSpaceKeydown(event: Event): void {
-        if (!(event instanceof KeyboardEvent) || event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey ||
-            event.metaKey || event.shiftKey) return;
+        if (
+            !(event instanceof KeyboardEvent) ||
+            event.defaultPrevented ||
+            event.repeat ||
+            event.altKey ||
+            event.ctrlKey ||
+            event.metaKey ||
+            event.shiftKey
+        )
+            return;
 
         const target = event.target;
-        if (target instanceof Element &&
-            target.closest('button, a, input, select, textarea, [contenteditable]:not([contenteditable="false"]), [role="button"], [role="slider"], [role="tab"], [role="checkbox"], [role="switch"], [role="radio"], [role="option"], [role^="menuitem"]')) {
+        if (
+            target instanceof Element &&
+            target.closest(
+                'button, a, input, select, textarea, [contenteditable]:not([contenteditable="false"]), [role="button"], [role="slider"], [role="tab"], [role="checkbox"], [role="switch"], [role="radio"], [role="option"], [role^="menuitem"]',
+            )
+        ) {
             return;
         }
 
@@ -49,16 +64,17 @@ export class Player {
 
     onFooterClick(event: MouseEvent): void {
         const target = event.target;
-        if (target instanceof Element &&
-            target.closest('button, a, input, select, textarea, [role="slider"]')) {
+        if (
+            target instanceof Element &&
+            target.closest('button, a, input, select, textarea, [role="slider"]')
+        ) {
             return;
         }
         this.nowPlaying().toggle();
     }
 
     onFooterKeydown(event: KeyboardEvent): void {
-        if (event.target !== event.currentTarget ||
-            event.key !== 'Enter') return;
+        if (event.target !== event.currentTarget || event.key !== 'Enter') return;
 
         event.preventDefault();
         this.nowPlaying().toggle();

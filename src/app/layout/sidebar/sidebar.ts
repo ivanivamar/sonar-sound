@@ -1,4 +1,4 @@
-import { Component, signal, inject, computed } from '@angular/core';
+import { Component, signal, inject, computed, output } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ClickOutside } from '../../shared/directives/click-outside';
 import { Ripple } from '../../shared/directives/ripple';
@@ -13,6 +13,7 @@ import { ViewportService } from '../../core/viewport/viewport.service';
     templateUrl: './sidebar.html',
 })
 export class Sidebar {
+    readonly linkActivated = output<void>();
     private readonly userService = inject(UserService);
     isAccountPopupVisible = signal(false);
     private readonly isPhoneSize = inject(ViewportService).isPhone;

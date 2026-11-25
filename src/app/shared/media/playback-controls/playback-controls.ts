@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { PlayerService, RepeatMode } from '../../../core/player/player.service';
 import { Ripple } from '../../directives/ripple';
-import { QueueService } from '../../../core/player/queue.service';
+import { QueueService } from '../../../core/player/queue/queue.service';
 
 @Component({
     imports: [Ripple],

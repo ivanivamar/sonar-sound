@@ -8,9 +8,9 @@ import { DriveStreamService } from '../drive/drive-stream.service';
 import { TrackRow } from '../library/library-file.model';
 import { LibraryService } from '../library/library.service';
 import { MediaSessionService } from './media-session.service';
-import { PlayerService } from './player.service';
-import { PlayHistoryService } from './play-history.service';
-import { QueueService } from './queue.service';
+import { PlayerService, RepeatMode } from './player.service';
+import { PlayHistoryService } from './tracking/play-history.service';
+import { QueueService } from './queue/queue.service';
 
 class FakeMetadata {
     title: string;
@@ -84,6 +84,8 @@ function track(id: string): TrackRow {
 describe('MediaSessionService', () => {
     const signedIn = signal(true);
     const getUrl = vi.fn();
+    const getColor = vi.fn();
+    const getAlbumById = vi.fn();
     const handlers = new Map<MediaSessionAction, MediaSessionActionHandler>();
     let media: {
         metadata: FakeMetadata | null;
@@ -96,6 +98,8 @@ describe('MediaSessionService', () => {
         handlers.clear();
         signedIn.set(true);
         getUrl.mockReset().mockReturnValue(of('blob:cover'));
+        getColor.mockReset().mockReturnValue(of({ hue: 1, chroma: 1 }));
+        getAlbumById.mockReset().mockReturnValue(undefined);
         media = {
             metadata: null,
             playbackState: 'none',
@@ -114,12 +118,12 @@ describe('MediaSessionService', () => {
                 { provide: CoverService, useValue: { getUrl } },
                 {
                     provide: CoverColorService,
-                    useValue: { getColor: () => of({ hue: 1, chroma: 1 }) },
+                    useValue: { getColor },
                 },
                 {
                     provide: LibraryService,
                     useValue: {
-                        getAlbumById: () => undefined,
+                        getAlbumById,
                         getTrackRowById: (id: string) => (id === 'missing' ? undefined : track(id)),
                     },
                 },
@@ -183,6 +187,42 @@ describe('MediaSessionService', () => {
         await pendingRequest;
         expect(media.metadata?.title).toBe('Track c');
         expect(media.metadata?.artwork).toEqual([]);
+    });
+
+    it('uses the album color only for its own cover', async () => {
+        getAlbumById.mockReturnValue({ cover: 'cover-a', coverColor: { hue: 25, chroma: 0.3 } });
+        const player = TestBed.inject(PlayerService);
+
+        await player.playTrack(track('a'));
+        expect(player.cover()).toBe('cover-a');
+        expect(player.coverColor()).toEqual({ hue: 25, chroma: 0.3 });
+        expect(getColor).not.toHaveBeenCalled();
+
+        await player.playTrack(track('b'));
+        expect(player.cover()).toBe('cover-b');
+        expect(player.coverColor()).toEqual({ hue: 1, chroma: 1 });
+        expect(getColor).toHaveBeenCalledWith('cover-b');
+    });
+
+    it('ignores a color request from an earlier track or signed-out session', async () => {
+        const first = new Subject<{ hue: number; chroma: number }>();
+        const second = new Subject<{ hue: number; chroma: number }>();
+        getColor.mockReturnValueOnce(first).mockReturnValueOnce(second);
+        const player = TestBed.inject(PlayerService);
+
+        await player.playTrack(track('a'));
+        await player.playTrack(track('b'));
+        first.next({ hue: 20, chroma: 0.2 });
+        await Promise.resolve();
+        expect(player.cover()).toBe('cover-b');
+        expect(player.coverColor()).toBeNull();
+
+        signedIn.set(false);
+        TestBed.tick();
+        second.next({ hue: 30, chroma: 0.3 });
+        await Promise.resolve();
+        expect(player.cover()).toBeNull();
+        expect(player.coverColor()).toBeNull();
     });
 
     it('reports valid, bounded positions and clears them', () => {
@@ -475,12 +515,25 @@ describe('MediaSessionService', () => {
         expect(FakeAudio.instance.src).toBe('/stream/flac-a');
     });
 
+    it('cycles repeat from off to all to one and back to off', () => {
+        const player = TestBed.inject(PlayerService);
+
+        expect(player.repeat()).toBe(RepeatMode.Off);
+        player.toggleRepeat();
+        expect(player.repeat()).toBe(RepeatMode.All);
+        player.toggleRepeat();
+        expect(player.repeat()).toBe(RepeatMode.One);
+        player.toggleRepeat();
+        expect(player.repeat()).toBe(RepeatMode.Off);
+    });
+
     it('moves to the next occurrence, even with repeat-one enabled', async () => {
         const player = TestBed.inject(PlayerService);
         const queue = TestBed.inject(QueueService);
 
         await player.playQueue(['a', 'a', 'b'], 0);
-        player.toggleRepeat(); // Off -> One
+        player.toggleRepeat();
+        player.toggleRepeat(); // Off -> All -> One
 
         await player.nextTrack();
 
@@ -496,11 +549,13 @@ describe('MediaSessionService', () => {
         await player.nextTrack();
         expect(queue.state().currentIndex).toBe(1);
 
-        player.toggleRepeat(); // Off -> One
+        player.toggleRepeat();
+        player.toggleRepeat(); // Off -> All -> One
         await player.nextTrack();
         expect(queue.state().currentIndex).toBe(1);
 
-        player.toggleRepeat(); // One -> All
+        player.toggleRepeat();
+        player.toggleRepeat(); // One -> Off -> All
         await player.nextTrack();
         expect(queue.state().currentIndex).toBe(0);
         expect(player.currentTrack()?.id).toBe('a');
@@ -545,8 +600,7 @@ describe('MediaSessionService', () => {
         const queue = TestBed.inject(QueueService);
 
         await player.playQueue(['a', 'b'], 1);
-        player.toggleRepeat();
-        player.toggleRepeat(); // Off -> One -> All
+        player.toggleRepeat(); // Off -> All
 
         FakeAudio.instance.paused = true;
         FakeAudio.instance.dispatchEvent(new Event('ended'));
@@ -561,7 +615,8 @@ describe('MediaSessionService', () => {
 
         await player.playQueue(['a', 'b'], 1);
         const entryId = queue.state().entries[1].entryId;
-        player.toggleRepeat(); // Off -> One
+        player.toggleRepeat();
+        player.toggleRepeat(); // Off -> All -> One
 
         FakeAudio.instance.paused = true;
         FakeAudio.instance.dispatchEvent(new Event('ended'));
@@ -606,8 +661,7 @@ describe('MediaSessionService', () => {
         await player.previousTrack();
         expect(queue.state().currentIndex).toBe(0);
 
-        player.toggleRepeat();
-        player.toggleRepeat(); // Off -> One -> All
+        player.toggleRepeat(); // Off -> All
         await player.previousTrack();
 
         expect(queue.state().currentIndex).toBe(1);

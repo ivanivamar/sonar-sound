@@ -5,9 +5,9 @@ import { CoverColorService } from '../../../core/cover/cover-color.service';
 import { CoverService } from '../../../core/cover/cover.service';
 import { TrackRow } from '../../../core/library/library-file.model';
 import { LibraryService } from '../../../core/library/library.service';
-import { createQueue, moveEntry, toggleShuffle } from '../../../core/player/queue.model';
+import { createQueue, moveEntry, toggleShuffle } from '../../../core/player/queue/queue.model';
 import { PlayerService } from '../../../core/player/player.service';
-import { QueueService } from '../../../core/player/queue.service';
+import { QueueService } from '../../../core/player/queue/queue.service';
 import { QueueContent } from './queue-content';
 import { provideRouter } from '@angular/router';
 import { CdkDrag, CdkDropList } from '@angular/cdk/drag-drop';
@@ -115,6 +115,37 @@ describe('QueueContent', () => {
         expect(rows[1].getAttribute('aria-current')).toBe('true');
         expect(rows[2].getAttribute('aria-current')).toBeNull();
         expect(element.querySelector('.queue-header')?.textContent).toContain('1 upcoming');
+    });
+
+    it('shows previously played tracks as upcoming after enabling shuffle', async () => {
+        state.set(
+            toggleShuffle(
+                createQueue(
+                    [
+                        { entryId: 'first', trackId: 'a' },
+                        { entryId: 'current', trackId: 'b' },
+                        { entryId: 'last', trackId: 'c' },
+                    ],
+                    1,
+                ),
+                () => 0,
+            ),
+        );
+        await fixture.whenStable();
+
+        const element = fixture.nativeElement as HTMLElement;
+        const items = element.querySelectorAll<HTMLLIElement>('.queue-list li');
+        expect(Array.from(items, (item) => item.dataset['entryId'])).toEqual([
+            'current',
+            'last',
+            'first',
+        ]);
+        expect(Array.from(items, (item) => item.dataset['status'])).toEqual([
+            'current',
+            'upcoming',
+            'upcoming',
+        ]);
+        expect(element.querySelector('.queue-header')?.textContent).toContain('2 upcoming');
     });
 
     it('plays the selected occurrence using its entry ID', async () => {

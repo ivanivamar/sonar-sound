@@ -42,11 +42,16 @@ export class BottomSheet {
         this.closing.set(true);
     }
 
-    protected onAnimationEnd(event: AnimationEvent): void {
-        if (!this.closing() || event.target !== event.currentTarget) return;
+    dismiss(): void {
+        if (!this.isOpen) return;
         this.sheet().nativeElement.close();
         this.closing.set(false);
         this.dragHeight.set(null);
+    }
+
+    protected onAnimationEnd(event: AnimationEvent): void {
+        if (!this.closing() || event.target !== event.currentTarget) return;
+        this.dismiss();
     }
 
     protected onPointerDown(event: PointerEvent): void {

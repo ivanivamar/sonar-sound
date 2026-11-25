@@ -1,27 +1,15 @@
-import {
-    computed,
-    effect,
-    inject,
-    Injector,
-    runInInjectionContext,
-    Service,
-    signal,
-    untracked,
-} from '@angular/core';
-import { PlayHistoryService } from './play-history.service';
-import { PlayTrackingService } from './play-tracking.service';
+import { computed, effect, inject, Service, signal, untracked } from '@angular/core';
+import { PlayHistoryService } from './tracking/play-history.service';
+import { PlayTrackingService } from './tracking/play-tracking.service';
+import { AudioPlayTracking } from './tracking/audio-play-tracking';
 import { DriveStreamService } from '../drive/drive-stream.service';
 import { TrackRow } from '../library/library-file.model';
-import { firstValueFrom } from 'rxjs';
-import { atmosphere } from '../../layout/atmosphere/atmosphere.service';
-import { CoverColorService } from '../cover/cover-color.service';
 import { LibraryService } from '../library/library.service';
-import { CoverColor } from '../cover/cover-color';
-import { trackCoverId } from '../cover/cover-id';
 import { AuthService } from '../auth/auth.service';
 import { MediaSessionService } from './media-session.service';
-import { QueueService } from './queue.service';
-import { adjacentEntryIndex } from './queue.model';
+import { PlayerArtworkService } from './player-artwork.service';
+import { QueueService } from './queue/queue.service';
+import { adjacentEntryIndex, QueueState } from './queue/queue.model';
 
 export enum RepeatMode {
     Off,
@@ -34,15 +22,14 @@ const PREVIOUS_RESTART_THRESHOLD_SECONDS = 3;
 @Service()
 export class PlayerService {
     // Services injected via Angular's dependency injection system.
-    private readonly injector = inject(Injector);
     private readonly authService = inject(AuthService);
-    private readonly coverColorService = inject(CoverColorService);
     private readonly libraryService = inject(LibraryService);
     private readonly driveStreamService = inject(DriveStreamService);
     private readonly mediaSession = inject(MediaSessionService);
     private readonly playTracking = inject(PlayTrackingService);
     private readonly playHistory = inject(PlayHistoryService);
     private readonly queue = inject(QueueService);
+    private readonly artwork = inject(PlayerArtworkService);
 
     // Signals and state variables for the player.
     private readonly _currentTrack = signal<TrackRow | null>(null);
@@ -50,8 +37,6 @@ export class PlayerService {
     private readonly _position = signal(0);
     private readonly _duration = signal(0);
     private readonly _error = signal<string | null>(null);
-    private readonly _cover = signal<string | null>(null);
-    private readonly _coverColor = signal<CoverColor | null>(null);
     private readonly loading = signal(false);
     private readonly stalled = signal(false);
     private readonly _repeat = signal<RepeatMode>(RepeatMode.Off);
@@ -62,22 +47,20 @@ export class PlayerService {
     readonly position = this._position.asReadonly();
     readonly duration = this._duration.asReadonly();
     readonly error = this._error.asReadonly();
-    readonly cover = this._cover.asReadonly();
-    readonly coverColor = this._coverColor.asReadonly();
+    readonly cover = this.artwork.cover;
+    readonly coverColor = this.artwork.color;
     /** True while the track loads and whenever playback is waiting for data. */
     readonly isBuffering = computed(() => this.loading() || this.stalled());
     readonly repeat = this._repeat.asReadonly();
+    private readonly _seekCompleted = signal(0);
+    readonly seekCompleted = this._seekCompleted.asReadonly();
 
     // HTMLAudioElement used for playback and related state.
     private readonly audio = new Audio();
     private audioUrl: string | null = null;
     private sourceReady = false;
     private loadVersion = 0;
-    private atmosphereInitialized = false;
-
-    private trackingStarted = false;
-    private trackingAdvancing = false;
-    private trackingSeeking = false;
+    private readonly audioTracking: AudioPlayTracking;
 
     constructor() {
         this.audio.addEventListener('playing', () => {
@@ -98,6 +81,10 @@ export class PlayerService {
         this.audio.addEventListener('timeupdate', () => {
             this._position.set(this.audio.currentTime);
             this.mediaSession.updatePosition(this.audio);
+        });
+        this.audio.addEventListener('seeked', () => {
+            this._position.set(this.audio.currentTime);
+            this._seekCompleted.update((count) => count + 1);
         });
         this.audio.addEventListener('durationchange', () => {
             const duration = this.audio.duration;
@@ -155,7 +142,12 @@ export class PlayerService {
             },
         });
 
-        this.attachPlayTracking();
+        this.audioTracking = new AudioPlayTracking(
+            this.audio,
+            this.playTracking,
+            () => this._currentTrack()?.id ?? null,
+            () => !!this.audioUrl,
+        );
 
         effect(() => {
             if (!this.authService.isSignedIn()) {
@@ -174,7 +166,10 @@ export class PlayerService {
         await this.loadTrack(track);
     }
 
-    private async loadTrack(track: TrackRow): Promise<void> {
+    private async loadTrack(
+        track: TrackRow,
+        options: { autoplay?: boolean; startAt?: number } = {},
+    ): Promise<void> {
         this.releaseAudio();
         const version = this.loadVersion;
 
@@ -182,16 +177,13 @@ export class PlayerService {
 
         this.mediaSession.setTrack(track);
 
-        this.initializeAtmosphere();
         this._position.set(0);
         this._duration.set(0);
         this._error.set(null);
-        this._coverColor.set(null);
-        this._cover.set(null);
         this._isPlaying.set(false);
         this.loading.set(true);
 
-        void this.loadCover(track, version);
+        this.artwork.load(track);
 
         try {
             await this.driveStreamService.register();
@@ -203,7 +195,8 @@ export class PlayerService {
             this.audio.src = this.audioUrl;
             this.sourceReady = true;
 
-            await this.play();
+            if (options.startAt) this.seekWhenReady(options.startAt, version);
+            if (options.autoplay ?? true) await this.play();
         } catch (error: unknown) {
             if (version !== this.loadVersion) return;
 
@@ -247,29 +240,15 @@ export class PlayerService {
     }
 
     seek(seconds: number): void {
-        if (seconds === this.audio.currentTime) return;
-
-        this.sampleHeard();
-        this.trackingSeeking = true;
-        this.playTracking.stopProgress();
-
-        try {
-            this.audio.currentTime = seconds;
-        } catch (error) {
-            this.trackingSeeking = false;
-            if (this.trackingAdvancing && !this.audio.seeking) {
-                this.resumeTrackingProgress();
-            }
-            throw error;
-        }
+        this.audioTracking.seek(seconds);
     }
 
     toggleRepeat() {
         this._repeat.set(
             this._repeat() === RepeatMode.Off
-                ? RepeatMode.One
-                : this._repeat() === RepeatMode.One
-                  ? RepeatMode.All
+                ? RepeatMode.All
+                : this._repeat() === RepeatMode.All
+                  ? RepeatMode.One
                   : RepeatMode.Off,
         );
     }
@@ -291,6 +270,21 @@ export class PlayerService {
 
         this.queue.replace(entries, startIndex);
         await this.loadTrack(track);
+    }
+
+    async restoreQueue(state: QueueState, repeat: RepeatMode, positionSeconds = 0): Promise<void> {
+        const entry = state.entries[state.currentIndex];
+        const track = entry ? this.libraryService.getTrackRowById(entry.trackId) : undefined;
+        if (entry && !track) {
+            throw new Error('The saved track is not available in the library.');
+        }
+
+        this.queue.restore(state);
+        this._repeat.set(repeat);
+
+        if (track) {
+            await this.loadTrack(track, { autoplay: false, startAt: positionSeconds });
+        }
     }
 
     async playQueueEntry(entryId: string): Promise<void> {
@@ -338,8 +332,7 @@ export class PlayerService {
         this._position.set(0);
         this._duration.set(0);
         this._error.set(null);
-        this._coverColor.set(null);
-        this._cover.set(null);
+        this.artwork.clear();
         this._isPlaying.set(false);
         this.loading.set(false);
 
@@ -348,7 +341,7 @@ export class PlayerService {
 
     /** Releases the audio source and cancels any pending load. */
     private releaseAudio(): void {
-        this.finishTracking();
+        this.audioTracking.finish();
         this.loadVersion++;
         this.sourceReady = false;
         this.stalled.set(false);
@@ -361,109 +354,12 @@ export class PlayerService {
         this.audio.load();
     }
 
-    private sampleHeard(): void {
-        if (!this.trackingAdvancing || this.trackingSeeking || this.audio.seeking) return;
-
-        this.playTracking.sampleProgress(
-            this.audio.currentTime,
-            performance.now(),
-            this.audio.playbackRate,
-        );
-    }
-
-    private resumeTrackingProgress(): void {
-        this.playTracking.resumeProgress(
-            this.audio.currentTime,
-            performance.now(),
-            this.audio.playbackRate,
-        );
-    }
-
-    private finishTracking(): void {
-        this.sampleHeard();
-        this.playTracking.clear();
-        this.trackingStarted = false;
-        this.trackingAdvancing = false;
-        this.trackingSeeking = false;
-    }
-
-    private attachPlayTracking(): void {
-        this.audio.addEventListener('playing', () => {
-            const track = this._currentTrack();
-            if (!track || !this.audioUrl || this.audio.paused) return;
-
-            if (!this.trackingStarted) {
-                this.playTracking.start(track.id, Date.now(), this.audio.duration);
-                this.trackingStarted = true;
-            }
-
-            this.trackingAdvancing = true;
-            if (!this.trackingSeeking && !this.audio.seeking) {
-                this.resumeTrackingProgress();
-            }
-        });
-
-        this.audio.addEventListener('timeupdate', () => this.sampleHeard());
-        this.audio.addEventListener('ratechange', () => this.sampleHeard());
-
-        this.audio.addEventListener('durationchange', () => {
-            this.playTracking.setDuration(this.audio.duration);
-        });
-
-        const stopProgress = () => {
-            this.sampleHeard();
-            this.trackingAdvancing = false;
-            this.playTracking.stopProgress();
-        };
-
-        this.audio.addEventListener('pause', stopProgress);
-        this.audio.addEventListener('waiting', stopProgress);
-        this.audio.addEventListener('error', stopProgress);
-
-        this.audio.addEventListener('seeking', () => {
-            this.trackingSeeking = true;
-            this.playTracking.stopProgress();
-        });
-
-        this.audio.addEventListener('seeked', () => {
-            this.trackingSeeking = false;
-            if (this.trackingAdvancing && !this.audio.paused) {
-                this.resumeTrackingProgress();
-            }
-        });
-    }
-
-    private async loadCover(track: TrackRow, version: number): Promise<void> {
-        const album = this.libraryService.getAlbumById(track.albumId);
-        const coverId = trackCoverId(track, album);
-        if (!coverId) return;
-
-        this._cover.set(coverId);
-        void this.mediaSession.setArtwork(coverId);
-
-        // Only the album's own cover has a precomputed colour.
-        const known = coverId === album?.cover ? album.coverColor : null;
-        if (known) {
-            this._coverColor.set(known);
-            return;
-        }
-
-        try {
-            const color = await firstValueFrom(this.coverColorService.getColor(coverId));
-            if (version === this.loadVersion) {
-                this._coverColor.set(color);
-            }
-        } catch {
-            // The colour is optional; the cover and playback continue without it.
-        }
-    }
-
     private handleTrackEnded(): void {
         this._isPlaying.set(false);
         this.mediaSession.setPlaybackState('paused');
 
         // Finish counting this playback before a new track can start.
-        this.finishTracking();
+        this.audioTracking.finish();
 
         const state = this.queue.state();
         if (state.currentIndex === -1) return;
@@ -482,19 +378,23 @@ export class PlayerService {
         });
     }
 
-    private initializeAtmosphere(): void {
-        if (this.atmosphereInitialized) return;
-        this.atmosphereInitialized = true;
+    // Seeks directly on the element, not through seek(), so restoring a position is never sampled as listening.
+    private seekWhenReady(seconds: number, version: number): void {
+        const apply = () => {
+            // A newer load or a reset replaced this source.
+            if (version !== this.loadVersion) return;
 
-        // playTrack() runs from event handlers, so atmosphere()'s inject() needs an explicit context.
-        runInInjectionContext(this.injector, () =>
-            atmosphere(() => {
-                const color = this.coverColor();
-                return {
-                    hue: color ? String(color.hue) : null,
-                    chroma: color ? String(color.chroma) : null,
-                };
-            }),
-        );
+            const duration = this.audio.duration;
+            this.audio.currentTime = Number.isFinite(duration)
+                ? Math.min(seconds, duration)
+                : seconds;
+            this._position.set(this.audio.currentTime);
+        };
+
+        if (this.audio.readyState >= HTMLMediaElement.HAVE_METADATA) {
+            apply();
+        } else {
+            this.audio.addEventListener('loadedmetadata', apply, { once: true });
+        }
     }
 }

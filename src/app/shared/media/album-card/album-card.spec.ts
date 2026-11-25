@@ -11,6 +11,14 @@ describe('AlbumCard', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(AlbumCard);
+        fixture.componentRef.setInput('album', {
+            id: 'album-1',
+            title: 'Album',
+            artistId: 'artist-1',
+            artist: 'Artist',
+            trackCount: 0,
+            addedAt: '',
+        });
         component = fixture.componentInstance;
         await fixture.whenStable();
     });

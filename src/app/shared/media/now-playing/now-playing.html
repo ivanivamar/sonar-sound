@@ -99,7 +99,7 @@
                 [style.--sheet-bg]="coverColor()?.hue"
             >
                 @if (currentTab() === 'queue') {
-                    <app-queue-content />
+                    <app-queue-content (linkActivated)="close()" />
                 } @else {
                     <p>Lyrics content goes here</p>
                 }
@@ -125,7 +125,7 @@
 
                 @switch (currentTab()) {
                     @case ('queue') {
-                        <app-queue-content />
+                        <app-queue-content (linkActivated)="close()" />
                     }
                     @case ('lyrics') {
                         <p>Lyrics content goes here</p>

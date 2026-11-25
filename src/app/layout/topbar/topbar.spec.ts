@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { App } from '../../app';
 import { AuthService } from '../../core/auth/auth.service';
+import { QueuePersistence } from '../../core/player/queue/queue-persistence.service';
 import { Atmosphere } from '../atmosphere/atmosphere';
 import { Sidebar } from '../sidebar/sidebar';
 import { Player } from '../../shared/media/player/player';
@@ -204,7 +205,11 @@ describe('App topbar scroll state', () => {
             imports: [App],
             providers: [
                 provideRouter([{ path: 'test', component: TestPage }]),
-                { provide: AuthService, useValue: { isSignedIn: signal(true) } },
+                {
+                    provide: AuthService,
+                    useValue: { isSignedIn: signal(true), signOutCount: signal(0) },
+                },
+                { provide: QueuePersistence, useValue: {} },
             ],
         }).overrideComponent(App, {
             remove: { imports: [Sidebar, Atmosphere, Player] },

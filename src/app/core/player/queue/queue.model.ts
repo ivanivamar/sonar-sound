@@ -117,23 +117,27 @@ export function toggleShuffle(state: QueueState, random: () => number = Math.ran
     }
 
     const originalOrder = state.entries.map((entry) => entry.entryId);
-    const entries = [...state.entries];
-    const upcomingStart = state.currentIndex + 1;
+    const entries = [
+        state.entries[state.currentIndex],
+        ...state.entries.slice(0, state.currentIndex),
+        ...state.entries.slice(state.currentIndex + 1),
+    ];
 
-    // Fisher–Yates, restricted to entries after the current track.
-    for (let index = entries.length - 1; index > upcomingStart; index--) {
+    // Shuffle every other occurrence while keeping the current one first.
+    for (let index = entries.length - 1; index > 1; index--) {
         const value = random();
         if (!Number.isFinite(value) || value < 0 || value >= 1) {
             throw new RangeError('Random value must be between 0 and 1.');
         }
 
-        const swapIndex = upcomingStart + Math.floor(value * (index - upcomingStart + 1));
+        const swapIndex = 1 + Math.floor(value * index);
         [entries[index], entries[swapIndex]] = [entries[swapIndex], entries[index]];
     }
 
     return {
         ...state,
         entries,
+        currentIndex: 0,
         shuffle: true,
         originalOrder,
     };

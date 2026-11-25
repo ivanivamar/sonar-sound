@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PlayerService, RepeatMode } from '../../../core/player/player.service';
 import { TrackRow } from '../../../core/library/library-file.model';
 import { PlaybackControls } from './playback-controls';
-import { QueueState } from '../../../core/player/queue.model';
+import { QueueState } from '../../../core/player/queue/queue.model';
 
 describe('PlaybackControls', () => {
     let fixture: ComponentFixture<PlaybackControls>;

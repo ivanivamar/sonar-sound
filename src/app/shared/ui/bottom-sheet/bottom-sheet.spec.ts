@@ -11,6 +11,7 @@ describe('BottomSheet', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(BottomSheet);
+        fixture.componentRef.setInput('label', 'Queue');
         component = fixture.componentInstance;
         await fixture.whenStable();
     });

@@ -39,6 +39,8 @@
         'content';
     grid-template-rows: auto minmax(0, 1fr);
     grid-template-columns: minmax(0, 1fr);
+    z-index: 10;
+
     &.open {
         transform: translateY(0);
         visibility: visible;
@@ -81,6 +83,7 @@
         height: 100%;
         grid-template-columns: 40% 1fr;
         padding: 0 100px;
+        padding-bottom: 40px;
         display: flex;
 
         app-cover {

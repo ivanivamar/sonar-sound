@@ -1,11 +1,18 @@
-import { signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { PlayerService, RepeatMode } from '../../../core/player/player.service';
 import { TrackRow } from '../../../core/library/library-file.model';
+import { LibraryService } from '../../../core/library/library.service';
+import { createQueue } from '../../../core/player/queue/queue.model';
+import { QueueService } from '../../../core/player/queue/queue.service';
+import { ViewportService } from '../../../core/viewport/viewport.service';
 import { Player } from './player';
 import { NowPlaying } from '../now-playing/now-playing';
+
+@Component({ template: '' })
+class TestPage {}
 
 describe('Player', () => {
     let component: Player;
@@ -13,6 +20,9 @@ describe('Player', () => {
     const currentTrack = signal<TrackRow | null>(null);
     const error = signal<string | null>(null);
     const toggle = vi.fn();
+    const playQueueEntry = vi.fn();
+    const isPhone = signal(false);
+    const queueState = signal(createQueue([], -1));
 
     beforeEach(async () => {
         vi.stubGlobal('matchMedia', vi.fn(() => ({
@@ -23,11 +33,20 @@ describe('Player', () => {
         currentTrack.set(null);
         error.set(null);
         toggle.mockReset();
+        playQueueEntry.mockReset();
+        isPhone.set(false);
+        queueState.set(createQueue([], -1));
 
         await TestBed.configureTestingModule({
             imports: [Player],
             providers: [
-                provideRouter([]),
+                provideRouter([{ path: 'library/:type/:id', component: TestPage }]),
+                { provide: ViewportService, useValue: { isPhone } },
+                { provide: QueueService, useValue: { state: queueState } },
+                {
+                    provide: LibraryService,
+                    useValue: { getTrackRowById: () => currentTrack() },
+                },
                 {
                     provide: PlayerService,
                     useValue: {
@@ -41,6 +60,7 @@ describe('Player', () => {
                         coverColor: signal(null),
                         cover: signal(null),
                         toggle,
+                        playQueueEntry,
                         seek: vi.fn(),
                     },
                 },
@@ -156,5 +176,90 @@ describe('Player', () => {
         expect(play?.disabled).toBe(false);
         play?.click();
         expect(toggle).toHaveBeenCalledTimes(1);
+    });
+
+    it('closes now playing when the mini-player album link is clicked', async () => {
+        currentTrack.set({ id: 'a', title: 'A', artist: 'B', albumId: 'c' } as TrackRow);
+        await fixture.whenStable();
+        const nowPlaying = fixture.debugElement.query(By.directive(NowPlaying))
+            .componentInstance as NowPlaying;
+        nowPlaying.open();
+        await fixture.whenStable();
+
+        const element = fixture.nativeElement as HTMLElement;
+        element.querySelector<HTMLAnchorElement>('.track-album')!.click();
+
+        expect(nowPlaying.isOpen()).toBe(false);
+        await fixture.whenStable();
+    });
+
+    it.each(['artist', 'album'])(
+        'closes now playing when a queue %s link is clicked without selecting the track',
+        async (type) => {
+            const track = { id: 'a', title: 'A', artist: 'B', artistId: 'b', albumId: 'c' } as TrackRow;
+            currentTrack.set(track);
+            queueState.set(createQueue([{ entryId: 'entry', trackId: 'a' }], 0));
+            await fixture.whenStable();
+            const nowPlaying = fixture.debugElement.query(By.directive(NowPlaying))
+                .componentInstance as NowPlaying;
+            nowPlaying.open();
+            await fixture.whenStable();
+
+            const element = fixture.nativeElement as HTMLElement;
+            const link = element.querySelector<HTMLAnchorElement>(
+                `.queue-sources a[href*="/library/${type}/"]`,
+            )!;
+            link.click();
+            expect(nowPlaying.isOpen()).toBe(false);
+            expect(playQueueEntry).not.toHaveBeenCalled();
+            await fixture.whenStable();
+        },
+    );
+
+    it('closes now playing when the phone album link is clicked', async () => {
+        isPhone.set(true);
+        currentTrack.set({ id: 'a', title: 'A', artist: 'B', albumId: 'c' } as TrackRow);
+        await fixture.whenStable();
+        const nowPlaying = fixture.debugElement.query(By.directive(NowPlaying))
+            .componentInstance as NowPlaying;
+        nowPlaying.open();
+        await fixture.whenStable();
+
+        const element = fixture.nativeElement as HTMLElement;
+        element.querySelector<HTMLAnchorElement>('.track-artist-album a')!.click();
+        expect(nowPlaying.isOpen()).toBe(false);
+        await fixture.whenStable();
+    });
+
+    it('dismisses the phone queue sheet when navigating from a queue link', async () => {
+        isPhone.set(true);
+        currentTrack.set({ id: 'a', title: 'A', artist: 'B', artistId: 'b', albumId: 'c' } as TrackRow);
+        queueState.set(createQueue([{ entryId: 'entry', trackId: 'a' }], 0));
+        await fixture.whenStable();
+        const nowPlaying = fixture.debugElement.query(By.directive(NowPlaying))
+            .componentInstance as NowPlaying;
+        nowPlaying.open();
+        await fixture.whenStable();
+
+        const element = fixture.nativeElement as HTMLElement;
+        const sheet = element.querySelector<HTMLDialogElement>('dialog.sheet')!;
+        sheet.showModal = () => sheet.setAttribute('open', '');
+        sheet.close = () => sheet.removeAttribute('open');
+        const queueButton = Array.from(
+            element.querySelectorAll<HTMLButtonElement>('.track-shortcuts button'),
+        ).find((button) => button.textContent?.includes('Queue'))!;
+        queueButton.click();
+        await fixture.whenStable();
+        expect(sheet.open).toBe(true);
+
+        sheet.querySelector<HTMLAnchorElement>('.queue-sources a')!.click();
+        expect(nowPlaying.isOpen()).toBe(false);
+        expect(sheet.open).toBe(false);
+        await fixture.whenStable();
+
+        nowPlaying.open();
+        await fixture.whenStable();
+        expect(sheet.open).toBe(false);
+        expect(nowPlaying.isOpen()).toBe(true);
     });
 });

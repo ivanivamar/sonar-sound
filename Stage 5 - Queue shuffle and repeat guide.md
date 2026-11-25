@@ -121,7 +121,7 @@ Use a named previous-restart threshold, for example 3 seconds, rather than scatt
 Implement and test shuffle as pure transformations first:
 
 1. When enabling it, store the current entry ID order as `originalOrder`.
-2. Keep the current entry selected and playing. Leave already-played entries in place and shuffle only the upcoming entries. For example, `[A, B, C, D]` with B current might become `[A, B, D, C]`.
+2. Keep the current entry selected and playing at the top, then shuffle all other entries, including already-played ones. For example, `[A, B, C, D]` with B current might become `[B, D, A, C]`.
 3. Use a proper Fisher–Yates shuffle. Accept a random-number function as an argument so tests can provide deterministic values.
 4. When disabling shuffle, restore `originalOrder` and find the current entry by ID, even if it is now at a different index.
 5. Define how manual reorders interact with shuffle. A simple, predictable starting policy is: **a manual reorder while shuffled becomes the new original order**. Turning shuffle off then keeps that edited order rather than unexpectedly undoing the user's change. Apply this policy to the whole queue and explain it in the UI if needed.

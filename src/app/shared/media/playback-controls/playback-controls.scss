@@ -45,4 +45,5 @@ button:focus-visible {
 .control-secondary.shuffle-active,
 .control-secondary.repeat-active {
     color: rgba(var(--ink-primary), 0.6);
+    background: rgba(255, 255, 255, 0.18);
 }

@@ -1,5 +1,5 @@
 .player {
-    z-index: 5;
+    z-index: 11;
     height: 86px;
     background: var(--bg-1);
     border-top: 1px solid #ffffff14;
@@ -20,7 +20,7 @@
     box-shadow: inset 0 1px #ffffff14;
     position: relative;
     cursor: pointer;
-    overflow: hidden;
+    overflow: visible;
 
     button:focus-visible {
         outline: 2px solid var(--ink-primary);

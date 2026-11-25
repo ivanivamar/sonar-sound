@@ -1,5 +1,12 @@
 import { Service, signal } from '@angular/core';
-import { QueueEntry, createQueue, moveEntry, selectEntry, toggleShuffle } from './queue.model';
+import {
+    QueueEntry,
+    QueueState,
+    createQueue,
+    moveEntry,
+    selectEntry,
+    toggleShuffle,
+} from './queue.model';
 
 @Service()
 export class QueueService {
@@ -11,6 +18,10 @@ export class QueueService {
         const nextState = createQueue(entries, currentIndex);
 
         this._state.set(shouldShuffle && entries.length > 0 ? toggleShuffle(nextState) : nextState);
+    }
+
+    restore(state: QueueState): void {
+        this._state.set(state);
     }
 
     select(entryId: string): void {

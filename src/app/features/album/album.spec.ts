@@ -8,6 +8,7 @@ import { CoverColorService } from '../../core/cover/cover-color.service';
 import { CoverService } from '../../core/cover/cover.service';
 import { AlbumFile, ArtistFile, TrackRow } from '../../core/library/library-file.model';
 import { LibraryService } from '../../core/library/library.service';
+import { QueuePersistence } from '../../core/player/queue/queue-persistence.service';
 import { PlayerService } from '../../core/player/player.service';
 import { Album } from './album';
 
@@ -34,7 +35,11 @@ describe('Album', () => {
             imports: [Album, App],
             providers: [
                 provideRouter([]),
-                { provide: AuthService, useValue: { isSignedIn: signal(true) } },
+                {
+                    provide: AuthService,
+                    useValue: { isSignedIn: signal(true), signOutCount: signal(0) },
+                },
+                { provide: QueuePersistence, useValue: {} },
                 {
                     provide: LibraryService,
                     useValue: {

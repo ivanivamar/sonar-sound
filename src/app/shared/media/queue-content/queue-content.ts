@@ -16,6 +16,7 @@ import {
     CdkDragPreview,
     CdkDragMove,
 } from '@angular/cdk/drag-drop';
+import { PopupPosition } from '../../directives/popup-position';
 
 type QueueRowStatus = 'played' | 'current' | 'upcoming';
 
@@ -27,7 +28,16 @@ interface QueueRow {
 }
 
 @Component({
-    imports: [Cover, DurationPipe, RouterLink, CdkDrag, CdkDragHandle, CdkDropList, CdkDragPreview],
+    imports: [
+        Cover,
+        DurationPipe,
+        RouterLink,
+        CdkDrag,
+        CdkDragHandle,
+        CdkDropList,
+        CdkDragPreview,
+        PopupPosition,
+    ],
     selector: 'app-queue-content',
     styleUrl: './queue-content.scss',
     templateUrl: './queue-content.html',

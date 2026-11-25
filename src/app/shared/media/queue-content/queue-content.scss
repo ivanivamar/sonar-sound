@@ -10,6 +10,10 @@
     min-height: 0;
     height: 100%;
 
+    @media (max-width: 768px) {
+        padding: 0 10px;
+    }
+
     .queue-header {
         display: flex;
         align-items: baseline;
@@ -93,6 +97,16 @@
                 height: 84px;
                 max-height: 84px;
                 padding-left: 16px;
+
+                .queue-cover::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    border-radius: 14px;
+                    background: oklch(0.88 0.1 var(--current-color));
+                    filter: blur(14px) saturate(1.7);
+                    inset: 6px -2px 6px;
+                }
             }
 
             &:hover,
@@ -109,10 +123,11 @@
 
             .queue-cover {
                 width: 50px;
-                --cover-radius: 12px;
+                --cover-radius: 14px;
                 box-shadow: rgba(255, 255, 255, 0.18) 0px 1px 0px inset;
-                border-radius: 12px;
+                border-radius: 14px;
                 height: 50px;
+                position: relative;
             }
 
             .queue-track-info {

@@ -58,6 +58,7 @@
                             [name]="row.track?.title ?? null"
                             [extractColor]="row.status === 'current'"
                             (colorResolved)="coverColor($event)"
+                            [style.--current-color]="currentColor()?.hue ?? 100"
                         ></app-cover>
 
                         <span class="queue-track-info">

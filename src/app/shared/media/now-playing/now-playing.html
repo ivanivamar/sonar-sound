@@ -31,7 +31,11 @@
     </header>
 
     <div class="now-playing-track">
-        <app-cover [cover]="playerService.cover()"></app-cover>
+        <app-cover
+            [cover]="playerService.cover()"
+            [extractColor]="true"
+            (colorResolved)="coverColor.set($event)"
+        ></app-cover>
 
         @if (viewport.isPhone()) {
             @let track = playerService.currentTrack();
@@ -79,9 +83,7 @@
                         <button
                             class="button button-outlined"
                             appRipple
-                            [class.active]="tab.id === currentTab()"
-                            [attr.aria-pressed]="tab.id === currentTab()"
-                            (click)="currentTab.set(tab.id)"
+                            (click)="openSheet(tab.id)"
                         >
                             <i class="material-symbols-rounded" aria-hidden="true">
                                 {{ shortcutIcons[tab.id] }}
@@ -91,6 +93,17 @@
                     }
                 </div>
             </div>
+
+            <app-bottom-sheet
+                [label]="currentTab() === 'queue' ? 'Queue' : 'Lyrics'"
+                [style.--sheet-bg]="coverColor()?.hue"
+            >
+                @if (currentTab() === 'queue') {
+                    <app-queue-content />
+                } @else {
+                    <p>Lyrics content goes here</p>
+                }
+            </app-bottom-sheet>
         } @else {
             <div class="track-panels">
                 <div class="track-shortcuts" role="group" aria-label="Panels">

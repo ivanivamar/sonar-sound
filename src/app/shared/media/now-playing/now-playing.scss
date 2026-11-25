@@ -157,10 +157,11 @@
             padding: 0 16px;
             grid-template-columns: 1fr;
             grid-template-rows: auto;
-            margin-top: 42px;
+            display: grid;
 
             app-cover {
-                width: 100%;
+                width: 80%;
+                margin: auto;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             }
 

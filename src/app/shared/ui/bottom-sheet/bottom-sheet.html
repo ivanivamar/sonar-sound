@@ -1,0 +1,30 @@
+<dialog
+    #sheet
+    class="sheet"
+    [class.expanded]="expanded()"
+    [class.dragging]="dragHeight() !== null"
+    [class.closing]="closing()"
+    (animationend)="onAnimationEnd($event)"
+    [style.height.px]="dragHeight()"
+    [attr.aria-label]="label()"
+    (close)="closed.emit()"
+>
+    <div
+        class="sheet-handle"
+        (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp()"
+        (pointercancel)="onPointerUp()"
+    >
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <header class="sheet-header">
+            <h3>{{ label() }}</h3>
+            <button class="button-icon btn-text" (click)="hide()" aria-label="Close">
+                <i class="material-symbols-rounded" aria-hidden="true">close</i>
+            </button>
+        </header>
+    </div>
+    <div class="sheet-body">
+        <ng-content />
+    </div>
+</dialog>

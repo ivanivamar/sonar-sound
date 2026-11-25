@@ -20,6 +20,8 @@ import { Slider } from '../player/slider/slider';
 import { DurationPipe } from '../../pipes/duration-pipe';
 import { PlaybackControls } from '../playback-controls/playback-controls';
 import { QueueContent } from '../queue-content/queue-content';
+import { BottomSheet } from '../../ui/bottom-sheet/bottom-sheet';
+import { CoverColor } from '../../../core/cover/cover-color';
 
 const TABS: TabItem[] = [
     { title: 'Queue', id: 'queue' },
@@ -36,12 +38,13 @@ const TABS: TabItem[] = [
         RouterLink,
         PlaybackControls,
         QueueContent,
+        BottomSheet,
     ],
     selector: 'app-now-playing',
     styleUrl: './now-playing.scss',
     templateUrl: './now-playing.html',
     host: {
-        '(document:keydown.escape)': 'close()',
+        '(document:keydown.escape)': 'onEscape()',
     },
 })
 export class NowPlaying {
@@ -51,7 +54,9 @@ export class NowPlaying {
     private readonly injector = inject(Injector);
     private readonly dialog = viewChild.required<ElementRef<HTMLElement>>('dialog');
     private returnFocusTo: HTMLElement | null = null;
+    private readonly sheet = viewChild(BottomSheet);
 
+    protected coverColor = signal<CoverColor | null>(null);
     readonly isOpen = signal(false);
     protected readonly tabs = TABS;
     protected readonly shortcutIcons: Record<string, string> = {
@@ -69,6 +74,7 @@ export class NowPlaying {
 
     toggle(): void {
         if (this.isOpen()) {
+            this.sheet()?.hide();
             this.close();
         } else {
             this.open();
@@ -94,5 +100,15 @@ export class NowPlaying {
         this.isOpen.set(false);
         this.returnFocusTo?.focus();
         this.returnFocusTo = null;
+    }
+
+    protected openSheet(tab: string): void {
+        this.currentTab.set(tab);
+        this.sheet()?.show();
+    }
+
+    protected onEscape(): void {
+        if (this.sheet()?.isOpen) return;
+        this.close();
     }
 }

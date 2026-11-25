@@ -1,0 +1,95 @@
+.sheet {
+    position: fixed;
+    inset: auto 0 0 0;
+    margin: 0;
+    width: 100%;
+    max-width: none;
+    height: 66dvh;
+    max-height: none;
+    padding: 0;
+    border: 0;
+    border-radius: 28px 28px 0px 0px;
+    color: inherit;
+    flex-direction: column;
+    transition: height 0.25s ease;
+    background: linear-gradient(oklch(0.2 0.05 var(--sheet-bg) / 0.98), rgb(18, 18, 20) 40%);
+    box-shadow:
+        rgba(255, 255, 255, 0.1) 0px 1px 0px inset,
+        rgba(0, 0, 0, 0.8) 0px -20px 60px -20px;
+    animation: 0.5s cubic-bezier(0.31, 0.94, 0.34, 1) both shIn;
+
+    &[open] {
+        display: flex;
+    }
+    &.expanded {
+        height: 100dvh;
+        border-radius: 0;
+    }
+    &::backdrop {
+        background: rgb(0 0 0 / 0.5);
+    }
+}
+
+.sheet-handle {
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+}
+
+.sheet.dragging {
+    transition: none;
+
+    .sheet-grip {
+        opacity: 0.5;
+        width: 50px;
+    }
+}
+
+.sheet.closing {
+    animation: 0.25s ease-in both shOut;
+}
+
+@keyframes shOut {
+    to {
+        transform: translateY(100%);
+    }
+}
+
+.sheet-grip {
+    width: 40px;
+    height: 4px;
+    margin: 8px auto;
+    border-radius: 2px;
+    background: currentColor;
+    opacity: 0.35;
+    transition:
+        width 0.25s ease,
+        opacity 0.25s ease;
+}
+
+.sheet-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px 8px;
+
+    h3 {
+        flex: 1;
+        margin: 0;
+    }
+}
+
+.sheet-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+@keyframes shIn {
+    0% {
+        transform: translateY(100%);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
